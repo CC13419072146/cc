@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能推荐</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        * {
+            padding: 0px;
+            margin: 0px;
+        }
+        .main {
+            width: 700px;
+            height: 400px;
+            margin-top: 10px;
+        }
+        .user-list {
+            float: left;
+            width: 200px;
+            height: 100%;
+            background-color: #e6e5e5;
+            overflow: auto;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .user-list ul {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        .user-list li {
+            width: 100%;
+            list-style: none;
+            height: 50px;
+            box-sizing: border-box;
+            padding-top: 10px;
+            padding-left: 5px;
+        }
+        .clickCls {
+            background-color: #cac7c6;
+        }
+        .noClickCls {
+            background-color: #e6e5e5;
+        }
+        .user-list li:hover {
+            background-color: #d9d8d8;
+            cursor: default;
+        }
+        .user-list li:active {
+            background-color: #cacaca;
+        }
+        .content {
+            float: right;
+            width: auto;
+            width: 500px;
+            height: 100%;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .chat-box {
+            border-bottom: 1px solid #ccc;
+            padding: 10px;
+            margin: 0 auto;
+            width: 100%;
+            background-color: #f5f5f5;
+            height: 60%;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+        .message {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .clearfix:before, .clearfix:after{
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .message-text-me {
+            background-color: #9eea6a;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+            max-width: 60%;
+            float: right;
+            height: auto;
+            word-wrap: break-word;
+            word-break: normal;
+        }
+        .message-time-me {
+            font-size: 12px;
+            color: #999;
+            margin-left: 5px;
+            float: right;
+        }
+        .message-text {
+            background-color: #ffffff;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+            max-width: 60%;
+            height: auto;
+            word-wrap: break-word;
+            word-break: normal;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: 5px;
+        }
+        .input-box {
+            height: 40%;
+        }
+        .input-box textarea {
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+            background-color: #ffffff;
+            width: 100%;
+            outline: none;
+            resize: none;
+            height: 67%;
+            box-sizing: border-box;
+            font-size: 20px;
+        }
+        .send {
+            padding: 2px;
+            border-radius: 5px;
+            border: none;
+            background-color: #f5f5f5;
+            color: #606060;
+            width: 50px;
+            cursor: pointer;
+            float: right;
+            margin-right: 10px;
+            border: 1px solid #606060;
+        }
+        .send:hover {
+            background-color: #129611;
+            color: #ffffff;
+        }
+        .send:active {
+            background-color: #1aad19;
+        }
+        .item {
+            margin-top: -17px;
+            margin-left: 25px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>消息中心</h3>
+    <div class="main">
+        <div class="user-list">
+            <ul>
+                <li v-for="(chat, index) in chatList" @click="clickChat(index, chat)" :ref=`li${index}`>
+                    <img v-if="chat.imgSrc" :src=`/api/file/download?fileName=${chat.imgSrc}` width="30" height="30">
+                    <img v-else src="avatar.png" width="30" height="30">
+                    <span style="display: inline-block; margin-left: 10px; font-size: 15px; vertical-align: top;
+                        margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                        width: 100px">
+                        {{chat.senderName}}</span>
+                    <span style="display: inline-block; width: 90px; font-size: 5px; margin-left: -100px;
+                        vertical-align: bottom; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                        {{chat.content}}</span>
+                    <el-badge :value=`${chat.unReadCount}` :max="99" type="danger" class="item" :hidden="`${chat.unReadCount}` === '0'"></el-badge>
+                </li>
+            </ul>
+        </div>
+        <div class="content">
+            <div class="chat-box" id="chatBox" ref="chat">
+                <div v-for="message in messages" :key="message.id" class="message clearfix">
+                    <div v-if="message.sender === `${currentUser}`" class="message-text-me">{{message.content}}</div>
+                    <div v-else class="message-text">{{message.content}}</div>
+                    <div v-if="message.sender === `${currentUser}`" class="clearfix">
+                        <span class="message-time-me">{{message.chatDate}}</span>
+                    </div>
+                    <div v-else class="message-time">{{message.chatDate}}</div>
+                </div>
+            </div>
+
+            <div class="input-box">
+                <textarea v-model="newMessage" class="textarea" @keyup.enter="sendMessage" :disabled="disabled"></textarea>
+                <!--<input tex v-model="newMessage" @keyup.enter="sendMessage" placeholder="xxx">-->
+                <button @click="sendMessage" class="send">发送</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogSelectVisible:false,
+                form: {
+                    proNo:"",
+                    proName:"",
+                    unitPrice:"",
+                    proDesc:"",
+                    proUrl:"",
+                    inventory:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                dialogVisible: false,
+                messages: [
+                ],
+                newMessage: '',
+                disableWebSocket: false,
+                websocket: null,
+                shopUser: '',
+                shopUserName: '',
+                shopAvatar: '',
+                proNo: '',
+                msg: {},
+                currentUser: sessionStorage.getItem('userNo'),
+                chatList: [],
+                click: false,
+                noClick: true,
+                prevIndex: -1,
+                disabled: true,
+                init: -1
+            };
+        },
+        methods: {
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    let chatBox = document.getElementById("chatBox");
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                })
+            },
+            sendMessage() {
+                if (this.newMessage.trim()) {
+
+                    this.msg.sender = sessionStorage.getItem('userNo');
+                    this.msg.receiver = this.shopUser;
+                    this.msg.content = this.newMessage;
+                    this.msg.type = 'sendMsg';
+
+                    this.websocket.send(JSON.stringify(this.msg));
+
+                    //
+                    if (this.prevIndex !== -1) {
+                        let prevLi = this.$refs["li"+this.prevIndex]
+                        prevLi.style.backgroundColor = '#e6e5e5';
+                    }
+                    let currLi = this.$refs.li0
+                    currLi.style.backgroundColor = '#cac7c6';
+                    this.prevIndex = 0;
+
+                }
+            },
+            initWebSocket() {
+
+                let healthFunction;
+                let reconnectTimes;
+                let clearCounter;
+                let objApp = this;
+                if (this.websocket == null) {
+                    if (!this.disableWebSocket) {
+                        var userNo = sessionStorage.getItem("userNo");
+                        let url = (window.location.protocol === 'http:' ? 'ws://' : 'wss://')
+                            + window.location.host
+                            + '/chat/' + userNo;
+                        this.websocket = new WebSocket(url);
+
+                        this.websocket.onclose = function () {
+                            if (reconnectTimes++ > 10) {
+                                objApp.disableWebSocket = true;
+                            }
+                            setTimeout(objApp.initWebSocket, 3000);
+                            clearTimeout(clearCounter);
+                            clearCounter = setTimeout(function () {
+                                reconnectTimes = 0;
+                            }, 60000);
+                        }
+
+                        this.websocket.onmessage = function (event) {
+                            objApp.onMessage(event);
+                        }
+
+                        this.websocket.onopen = function () {
+                            console.log('连接成功')
+                            objApp.start();
+                        }
+
+                        // clearInterval(healthFunction);
+                        // healthFunction = setInterval(function () {
+                        //     objApp.websocket.send("ping")
+                        // }, 3000)
+                    } else {
+                        clearInterval(healthFunction);
+                        this.websocket = null;
+                    }
+                }
+            },
+            start() {
+                this.flushChatList();
+            },
+            flushChatList() {
+                //获取对话用户列表以及未读数量
+                this.msg.receiver = sessionStorage.getItem('userNo');
+                this.msg.type = 'getChatList';
+                this.websocket.send(JSON.stringify(this.msg));
+            },
+            onMessage(event) {
+                var data = JSON.parse(event.data);
+                if (data.type === 'health') {
+
+                } else if (data.type === 'sendMsgAck') {
+                    this.messages.push(data.respBody);
+                    this.newMessage = '';
+                    this.scrollToBottom();
+                    this.flushChatList();
+                } else if (data.type == 'getChatListAck') {
+                    this.chatList = data.respBody;
+                    let objApp = this;
+                    if (this.shopUser != null && this.init == 0) {
+                        let isContains = this.chatList.some(item => item.senderName === objApp.shopUserName)
+                        if (!isContains) {
+                            this.getUser();
+                        } else {
+                            let temp;
+                            let tempArr = [];
+                            this.chatList.forEach(item => {
+                                if (item.senderName != objApp.shopUserName) {
+                                    tempArr.push(item);
+                                } else {
+                                    temp = item;
+                                }
+                            })
+                            tempArr.unshift(temp);
+                            this.chatList = tempArr;
+
+                            //获取聊天内容
+                            this.msg.receiver = sessionStorage.getItem('userNo');
+                            this.msg.sender = this.shopUser;
+                            this.msg.type = 'getChatContentList';
+                            this.websocket.send(JSON.stringify(this.msg));
+
+                            objApp.$nextTick(function () {
+                                if (objApp.prevIndex !== -1) {
+                                    let prevLi = objApp.$refs["li"+this.prevIndex]
+                                    prevLi.style.backgroundColor = '#e6e5e5';
+                                }
+                                let currLi = objApp.$refs.li0;
+                                currLi.style.backgroundColor = '#cac7c6';
+                                objApp.prevIndex = 0;
+
+                                this.disabled = false;
+                            })
+                        }
+                    }
+                } else if (data.type == 'getChatContentListAck') {
+                    this.messages = data.respBody;
+                    this.scrollToBottom();
+                } else if (data.type == 'setReadAck') {
+                    let tempChatList = [];
+                    let objApp = this;
+                    this.chatList.forEach(item => {
+                        if (item.sender === objApp.shopUser) {
+                            item.unReadCount = '0';
+                        }
+                        tempChatList.push(item);
+                    })
+                    this.chatList = tempChatList;
+                } else if (data.type == 'receiveMsgAck') {
+                    this.flushChatList();
+                    let resp = data.respBody;
+                    if (this.shopUser == resp.sender) {
+                        this.msg.receiver = sessionStorage.getItem('userNo');
+                        this.msg.sender = this.shopUser;
+                        this.msg.type = 'getChatContentList';
+                        this.websocket.send(JSON.stringify(this.msg));
+
+                        //置已读
+                        this.msg.receiver = sessionStorage.getItem('userNo');
+                        this.msg.sender = this.shopUser;
+                        this.msg.type = 'setRead';
+                        this.websocket.send(JSON.stringify(this.msg));
+                    }
+                }
+            },
+            clickChat(index, chat) {
+                this.init = 1;
+                //刚进页面的时候，输入内容框是不允许输入字符的，因为没有指定给谁发送消息
+                this.disabled = false;
+                //点击聊天用户列表时，设置背景加深
+                if (this.prevIndex !== -1) {
+                    let prevLi = this.$refs["li"+this.prevIndex]
+                    prevLi.style.backgroundColor = '#e6e5e5';
+                }
+                let currLi = this.$refs["li"+index]
+                currLi.style.backgroundColor = '#cac7c6';
+                this.prevIndex = index;
+
+                //获取聊天内容
+                this.msg.receiver = sessionStorage.getItem('userNo');
+                this.msg.sender = chat.sender;
+                this.msg.type = 'getChatContentList';
+                this.websocket.send(JSON.stringify(this.msg));
+
+                //点击左侧列表的时候将shopUser 设置为与自己聊天的用户，方便发送数据的时候设置聊天用户
+                this.shopUser = chat.sender;
+
+                //置已读
+                this.msg.receiver = sessionStorage.getItem('userNo');
+                this.msg.sender = chat.sender;
+                this.msg.type = 'setRead';
+                this.websocket.send(JSON.stringify(this.msg));
+            },
+            getUser() {
+                let objApp = this;
+                const $message = this.$message;
+                const params = new URLSearchParams();
+                params.append("userNo", this.shopUser);
+                axios.post("/api/user/getUser", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            const user = json.data;
+                            objApp.shopAvatar = user.avatar;
+                            objApp.shopUserName = user.userName;
+
+                            let temp = objApp.chatList.slice(0);
+                            objApp.chatList = [{
+                                senderName: user.userName,
+                                unReadCount: 0,
+                                content: '',
+                                imgSrc: user.avatar
+                            }]
+                            temp.forEach(item => {
+                                objApp.chatList.push(item)
+                            })
+
+                            objApp.$nextTick(function () {
+                                if (objApp.prevIndex !== -1) {
+                                    let prevLi = objApp.$refs["li"+this.prevIndex]
+                                    prevLi.style.backgroundColor = '#e6e5e5';
+                                }
+                                let currLi = objApp.$refs.li0;
+                                currLi.style.backgroundColor = '#cac7c6';
+                                objApp.prevIndex = 0;
+
+                                this.disabled = false;
+                            })
+
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+
+                    })
+            },
+            getParameterByName(name) {
+                let parameters = window.location.search;
+                // 如果没有参数
+                if (parameters.indexOf("?") == -1) return null;
+                let map = new Map;
+                let strs = parameters.substr(1).split("&");
+                for (let i = 0; i < strs.length; i++) {
+                    let str = strs[i].split("=");
+                    map.set(str[0], str[1]);
+                }
+                return map.get(name);
+            }
+        },
+        created() {
+            this.shopUser = this.getParameterByName("shopUser");
+            this.shopUserName = decodeURI(this.getParameterByName("shopUserName"));
+            this.init = 0;
+            this.initWebSocket();
+            window.onbeforeunload = function() {
+                if (this.websocket != null) {
+                    this.websocket.close();
+                }
+            }
+            this.disabled = true;
+        },
+        mounted() {
+
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

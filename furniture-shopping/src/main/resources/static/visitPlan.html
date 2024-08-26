@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>参考方案</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 100px;
+            height: 100px;
+            line-height: 100px;
+            text-align: center;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            display: block;
+        }
+        .el-upload--picture-card {
+            width: 100px;
+            height: 100px;
+        }
+        .el-upload--picture-card i {
+            font-size: 75px;
+        }
+
+        .el-upload-list--picture-card .el-upload-list__item {
+            width: 100px;
+            height: 100px;
+        }
+        .el-button {
+            min-height: 20px;
+            padding: 8px 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>参考方案</h3>
+    <!--<span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertSubmit" style="width: 200px;">添加新方案</el-button>
+    </span>-->
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            style="width: 100%">
+        <el-table-column
+                property="desiUrl"
+                label="方案图"
+                width="220">
+            <template v-slot="scope">
+                <img height="150" width="200" :src="scope.row.desiUrl" style="margin-right: 10px"/>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="desiTitle"
+                label="方案标题"
+                width="150">
+            <template #default="scope">
+                <span>{{ scope.row.desiTitle }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="desiDesc"
+                label="方案描述"
+                width="250">
+            <template #default="scope">
+                <span>{{ scope.row.desiDesc }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="userName"
+                label="设计师"
+                width="100">
+            <template #default="scope">
+                <span>{{ scope.row.userName }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="150">
+            <template #default="scope">
+                <el-button size="default" type="primary" @click="handleClicker(scope.row)">
+                    咨询设计师
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="方案维护" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="方案标题" :span="2">{{currentRow.desiTitle}}</el-descriptions-item>
+            <el-descriptions-item label="方案描述" :span="2">{{currentRow.desiDesc}}</el-descriptions-item>
+        </el-descriptions>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.desiTitle" placeholder="请输入要修改的方案标题" autocomplete="off"></el-input>
+                <el-input v-model="form.desiDesc" placeholder="请输入要修改的方案描述" autocomplete="off"></el-input>
+
+                <span style="margin-top: 5px; margin-bottom: 5px; margin-left: 10px">请选择要修改的方案图图:</span>
+                <el-upload
+                        class="avatar-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="upload"
+                        :before-upload="beforeAvatarUpload">
+                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
+
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认更新</el-button>
+            </span><br>
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="deletePro" style="width: 100%;margin-top: 10px">删除此方案</el-button>
+            </span>
+        </div>
+    </el-dialog>
+    <el-dialog title="新增方案" v-model="dialogInsertVisible" width="500px" center>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.desiTitle" placeholder="请输入新的方案标题" autocomplete="off"></el-input>
+                <el-input v-model="form.desiDesc" placeholder="请输入新的方案描述" autocomplete="off"></el-input>
+
+                <span style="margin-top: 5px; margin-bottom: 5px; margin-left: 10px">请选择新的方案图:</span>
+                <el-upload
+                        class="avatar-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="upload"
+                        :before-upload="beforeAvatarUpload">
+                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
+
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertPro('auditForm')" style="width: 100%">确认新增</el-button>
+            </span>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    desiUrl:"",
+                    desiTitle:"",
+                    desiDesc:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                imageUrl: ''
+            }
+        }
+        ,methods: {
+            handleClicker(row) {
+                window.location.href = "/chat.html?shopUser=" + row.userNo + "&shopUserName=" + row.userName;
+            },
+            upload(request) {
+                let objApp = this;
+                const $message = this.$message;
+                let file = request.file;
+                let userNo = sessionStorage.getItem('userNo');
+                formData = new FormData();
+                formData.append('file', file);
+                formData.append('userNo', userNo);
+                formData.append('uploadFlag', '2');
+
+                axios.post("/api/file/upload", formData)
+                    .then(function (response) {
+                        const json = response.data;
+                        console.log(json);
+                        if (json.status === 10000) {
+                            $message.success({message: "商品图上传成功", offset: 100});
+                            objApp.imageUrl = "/api/file/download?fileName=" + json.msg;
+                        }
+                    })
+            },
+            insertSubmit(){
+                const objApp=this;
+                objApp.dialogInsertVisible=true;
+            }
+            ,handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("desiId",objApp.currentRow.desiId);
+                        params.append("userNo", sessionStorage.getItem("userNo"));
+                        if (objApp.imageUrl.length!==0){
+                            params.append("desiUrl",objApp.imageUrl);
+                        }
+                        if (objApp.form.desiTitle.length!==0){
+                            params.append("desiTitle",objApp.form.desiTitle);
+                        }
+                        if (objApp.form.desiDesc.length!==0){
+                            params.append("desiDesc",objApp.form.desiDesc);
+                        }
+                        axios.post("/api/desi/update" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("更新成功" , {
+                                        callback:function(){
+                                            window.location.href = "/desiPic.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,insertPro(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("desiUrl",objApp.imageUrl);
+                        params.append("desiTitle",objApp.form.desiTitle);
+                        params.append("desiDesc",objApp.form.desiDesc);
+                        axios.post("/api/desi/insert" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("添加成功" , {
+                                        callback:function(){
+                                            window.location.href = "/desiPic.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,deletePro(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("desiId",this.currentRow.desiId);
+                axios.post("/api/desi/delete",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("删除成功" , {
+                                callback:function(){
+                                    window.location.href = "/desiPic.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            let params=new URLSearchParams();
+            axios.post("/api/desi/allPlan",params)
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        const formList = json.data.list;
+                        formList.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

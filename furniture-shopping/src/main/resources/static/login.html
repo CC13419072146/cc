@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家具导购平台登录</title>
+    <link rel="stylesheet" type="text/css" href="assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style>
+        .login-box {
+            border: 1px solid #DCDFE6;
+            /*border: 1px solid;*/
+            /*background-color: #DCDFE6;*/
+            width: 350px;
+            margin: 180px auto;
+            padding: 35px 35px 15px 35px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            box-shadow: 0 0 25px #909399;
+            top: 100px;
+        }
+        .login-title {
+            text-align: center;
+            margin: 0 auto 40px auto;
+            color: #303133;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px" class="login-box">
+        <h2 class="login-title">家具导购平台</h2>
+        <el-form-item label="账号" prop="userNo">
+            <el-input type="text" placeholder="请输入账号" v-model="form.userNo"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+            <el-input v-model="form.password" type="password" placeholder="请输入密码"></el-input>
+        </el-form-item>
+        <el-form-item label="选择身份" prop="role">
+            <el-select v-model="form.role" placeholder="请选择身份">
+                <el-option label="管理员" value="0"></el-option>
+                <el-option label="店铺" value="1"></el-option>
+                <el-option label="设计师" value="2"></el-option>
+                <el-option label="用户" value="3"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" v-on:click="onSubmit('loginForm')" style="width:200px">登录</el-button>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" v-on:click="register" style="width:200px">注册</el-button>
+        </el-form-item>
+    </el-form>
+</div>
+<script>
+    const Main = {
+        data() {
+            return {
+                dialogFormVisible: false
+                ,form: {
+                    userName: "",
+                    userNo:"",
+                    signature:"",
+                    password: "",
+                    role: ""
+                }
+                , rules: {
+                    userNo: [
+                        {required: true, message: '账号不能为空', trigger: 'blur'}
+                    ],
+                    password: [
+                        {required: true, message: '密码不能为空', trigger: 'blur'}
+                    ],
+                    role: [
+                        {required: true, message: '身份不能为空', trigger: 'blur'}
+                    ]
+                }
+            }
+        }
+        , methods: {
+            register() {
+                window.location.href="/register.html";
+            },
+
+            onSubmit(formName) {
+                const form = this.$refs[formName];
+                form.validate((valid) => {
+                    if (valid) {
+                        console.log("校验成功");
+                        const form = this.form;
+                        const $message = this.$message;
+                        const params = new URLSearchParams();
+                        params.append("userNo", form.userNo);
+                        params.append("password", form.password);
+                        params.append("role", form.role);
+                        axios.post("/api/user/login", params, {})
+                            .then(function (response) {
+                                const json = response.data;
+                                if (json.status === 10000) {
+                                    sessionStorage.roleType=json.data.roleType;
+                                    sessionStorage.userNo=json.data.userNo;
+                                    sessionStorage.userName = json.data.userName;
+                                    if (json.data.roleType===0){
+                                        window.location.href="/sysRoot.html";
+                                    }else if (json.data.roleType===1){
+                                        window.location.href="/sysShop.html";
+                                    }else if (json.data.roleType===2){
+                                        window.location.href="/sysDesigner.html";
+                                    }else if (json.data.roleType===3){
+                                        window.location.href="/sysUser.html"
+                                    }
+                                } else {
+                                    $message.error({message: json.msg, offset: 100})
+                                }
+                            })
+                    }
+                })
+            }
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app");
+</script>
+</body>
+</html>

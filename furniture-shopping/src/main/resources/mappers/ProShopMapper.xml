@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.ProShopMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.ProShop">
+    <id column="pro_id" jdbcType="BIGINT" property="proId" />
+    <result column="pro_no" jdbcType="VARCHAR" property="proNo" />
+    <result column="pro_name" jdbcType="VARCHAR" property="proName" />
+    <result column="unit_price" jdbcType="DECIMAL" property="unitPrice" />
+    <result column="pro_desc" jdbcType="VARCHAR" property="proDesc" />
+    <result column="pro_url" jdbcType="VARCHAR" property="proUrl" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+      <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="inventory" jdbcType="BIGINT" property="inventory" />
+    <result column="sales_volume" jdbcType="BIGINT" property="salesVolume"/>
+  </resultMap>
+  <sql id="Base_Column_List">
+    pro_id, pro_no, pro_name, unit_price, pro_desc, pro_url, user_no, inventory
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from pro_shop
+    where pro_id = #{proId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from pro_shop
+    where pro_id = #{proId,jdbcType=BIGINT}
+  </delete>
+    <delete id="deleteProNo" parameterType="java.lang.String">
+    delete from order_item
+    where pro_no = #{proNo,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.furniture.shopping.model.pojo.ProShop">
+    insert into pro_shop (pro_id, pro_no, pro_name, 
+      unit_price, pro_desc, pro_url, 
+      user_no, inventory)
+    values (#{proId,jdbcType=BIGINT}, #{proNo,jdbcType=VARCHAR}, #{proName,jdbcType=VARCHAR}, 
+      #{unitPrice,jdbcType=DECIMAL}, #{proDesc,jdbcType=VARCHAR}, #{proUrl,jdbcType=VARCHAR}, 
+      #{userNo,jdbcType=VARCHAR}, #{inventory,jdbcType=BIGINT})
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.ProShop">
+    insert into pro_shop
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="proId != null and proId != ''">
+        pro_id,
+      </if>
+      <if test="proNo != null and proNo != ''">
+        pro_no,
+      </if>
+      <if test="proName != null and proName != ''">
+        pro_name,
+      </if>
+      <if test="unitPrice != null and unitPrice != ''">
+        unit_price,
+      </if>
+      <if test="proDesc != null and proDesc != ''">
+        pro_desc,
+      </if>
+      <if test="proUrl != null and proUrl != ''">
+        pro_url,
+      </if>
+      <if test="userNo != null and userNo != ''">
+        user_no,
+      </if>
+      <if test="inventory != null and inventory != ''">
+        inventory,
+      </if>
+      <if test="proCate != null and proCate != ''">
+        pro_cate
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="proId != null and proId != ''">
+        #{proId,jdbcType=BIGINT},
+      </if>
+      <if test="proNo != null and proNo != ''">
+        #{proNo,jdbcType=VARCHAR},
+      </if>
+      <if test="proName != null and proName != ''">
+        #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="unitPrice != null and unitPrice != ''">
+        #{unitPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="proDesc != null and proDesc != ''">
+        #{proDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="proUrl != null and proUrl != ''">
+        #{proUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null and userNo != ''">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+      <if test="inventory != null and inventory != ''">
+        #{inventory,jdbcType=BIGINT},
+      </if>
+      <if test="proCate != null and proCate != ''">
+        #{proCate,jdbcType=VARCHAR}
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.ProShop">
+    update pro_shop
+    <set>
+      <if test="proNo != null">
+        pro_no = #{proNo,jdbcType=VARCHAR},
+      </if>
+      <if test="proName != null">
+        pro_name = #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="unitPrice != null">
+        unit_price = #{unitPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="proDesc != null">
+        pro_desc = #{proDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="proUrl != null">
+        pro_url = #{proUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+      <if test="inventory != null">
+        inventory = #{inventory,jdbcType=BIGINT},
+      </if>
+      <if test="proCate != null">
+        pro_cate = #{proCate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where pro_id = #{proId,jdbcType=BIGINT}
+  </update>
+
+    <update id="updateRecord" parameterType="com.furniture.shopping.model.pojo.ProShop">
+        update pro_shop
+        <set>
+            <if test="proNo != null">
+                pro_no = #{proNo,jdbcType=VARCHAR},
+            </if>
+            <if test="proName != null">
+                pro_name = #{proName,jdbcType=VARCHAR},
+            </if>
+            <if test="unitPrice != null">
+                unit_price = #{unitPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="proDesc != null">
+                pro_desc = #{proDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="proUrl != null">
+                pro_url = #{proUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="userNo != null">
+                user_no = #{userNo,jdbcType=VARCHAR},
+            </if>
+            <if test="inventory != null">
+                inventory = #{inventory,jdbcType=BIGINT},
+            </if>
+        </set>
+        where pro_no = #{proNo,jdbcType=VARCHAR}
+    </update>
+
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.ProShop">
+    update pro_shop
+    set pro_no = #{proNo,jdbcType=VARCHAR},
+      pro_name = #{proName,jdbcType=VARCHAR},
+      unit_price = #{unitPrice,jdbcType=DECIMAL},
+      pro_desc = #{proDesc,jdbcType=VARCHAR},
+      pro_url = #{proUrl,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR},
+      inventory = #{inventory,jdbcType=BIGINT}
+    where pro_id = #{proId,jdbcType=BIGINT}
+  </update>
+  <select id="selectByNo" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select * from pro_shop where user_no=#{value}
+  </select>
+  <select id="selectByPro" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from pro_shop where pro_no=#{value}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    SELECT
+        ps.pro_id,
+        ps.pro_no,
+        ps.pro_name,
+        ps.unit_price,
+        ps.pro_desc,
+        ps.pro_url,
+        su.user_name as user_no,
+        ps.inventory,
+        sum(so.shop_count) as sales_volume
+    FROM
+        pro_shop ps
+    LEFT JOIN (
+        SELECT
+            *
+        FROM
+            sys_order
+        WHERE
+            order_state = '3'
+    ) so ON ps.pro_no = so.shop_id
+    LEFT JOIN
+        sys_user su
+        ON ps.user_no = su.user_no
+    GROUP BY
+        ps.pro_id
+    ORDER BY
+        sum(so.shop_count) DESC
+  </select>
+  <select id="findPro" resultMap="BaseResultMap" parameterType="java.lang.String">
+    SELECT
+        ps.pro_id,
+        ps.pro_no,
+        ps.pro_name,
+        ps.unit_price,
+        ps.pro_desc,
+        ps.pro_url,
+        su.user_name as user_no,
+        ps.inventory,
+        sum(so.shop_count) as sales_volume
+    FROM
+        pro_shop ps
+    LEFT JOIN (
+        SELECT
+            *
+        FROM
+            sys_order
+        WHERE
+            order_state = '3'
+    ) so ON ps.pro_no = so.shop_id
+    LEFT JOIN
+        sys_user su
+        ON ps.user_no = su.user_no
+    <where>
+        <if test="proName != null and proName != ''">
+            and ps.pro_name like concat('%', #{proName}, '%')
+        </if>
+        <if test="proCate != null and proCate != ''">
+            and ps.pro_cate like concat('%', #{proCate}, '%')
+        </if>
+    </where>
+    GROUP BY
+        ps.pro_id
+    ORDER BY
+        sum(so.shop_count) DESC
+  </select>
+  <select id="getSuggestGoods" resultMap="BaseResultMap">
+    SELECT
+        ps.pro_id,
+        ps.pro_no,
+        ps.pro_name,
+        ps.unit_price,
+        ps.pro_desc,
+        ps.pro_url,
+        su.user_no,
+        su.user_name,
+        ps.inventory,
+        sum(so.shop_count) as sales_volume
+    FROM
+        pro_shop ps
+    LEFT JOIN (
+        SELECT
+            *
+        FROM
+            sys_order
+        WHERE
+            order_state = '3'
+    ) so ON ps.pro_no = so.shop_id
+    LEFT JOIN
+        sys_user su
+        ON ps.user_no = su.user_no
+    GROUP BY
+        ps.pro_id
+    ORDER BY
+        sum(so.shop_count) DESC
+  </select>
+
+    <select id="queryProCount" resultType="java.lang.Integer">
+        select inventory from pro_shop where pro_no = #{proNo}
+    </select>
+</mapper>

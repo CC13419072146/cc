@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能推荐</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .chat-window {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .message-container {
+            margin-bottom: 10px;
+        }
+
+        .message {
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        .message-text {
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .mine {
+            background-color: lightblue;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="chat-window">
+        <!-- 显示聊天消息的容器 -->
+        <div class="message-container">
+            <div v-for="message in messages" :key="message.id" class="message">
+                <div v-if="message.isMe" class="message-text mine">{{ message.text }}</div>
+                <div v-else class="message-text">{{ message.text }}</div>
+            </div>
+        </div>
+        <!-- 输入消息的表单 -->
+        <form @submit.prevent="sendMessage" class="input-form">
+            <input v-model="inputText" type="text" placeholder="输入消息" />
+            <button type="submit">发送</button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                inputText: '',
+                messages: [
+                    { id: 1, text: '你好', isMe: false },
+                    { id: 2, text: 'Hi', isMe: true },
+                ],
+            };
+        },
+        methods: {
+            sendMessage() {
+                if (this.inputText.trim()) {
+                    this.messages.push({ id: Date.now(), text: this.inputText, isMe: true });
+                    this.inputText = '';
+                }
+            },
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

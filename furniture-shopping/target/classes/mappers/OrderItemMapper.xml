@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.OrderItemMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.OrderItem">
+    <id column="item_id" jdbcType="BIGINT" property="itemId" />
+    <id column="pro_url" jdbcType="VARCHAR" property="proUrl" />
+    <id column="pro_name" jdbcType="VARCHAR" property="proName" />
+    <result column="pro_no" jdbcType="VARCHAR" property="proNo" />
+    <result column="pro_count" jdbcType="BIGINT" property="proCount" />
+    <result column="inventory" jdbcType="BIGINT" property="inventory" />
+    <result column="temp_price" jdbcType="DECIMAL" property="tempPrice" />
+    <result column="order_no" jdbcType="VARCHAR" property="orderNo" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="pro_desc" jdbcType="VARCHAR" property="proDesc" />
+    <result column="unit_price" jdbcType="DECIMAL" property="unitPrice" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    item_id, pro_no, pro_count, temp_price, order_no, user_no
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from order_item
+    where item_id = #{itemId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from order_item
+    where item_id = #{itemId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.furniture.shopping.model.pojo.OrderItem">
+    insert into order_item (pro_no, pro_count,
+      temp_price, order_no, user_no
+      )
+    values (#{proNo,jdbcType=VARCHAR}, #{proCount,jdbcType=BIGINT},
+      #{tempPrice,jdbcType=DECIMAL}, #{orderNo,jdbcType=VARCHAR}, #{userNo,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.OrderItem">
+    insert into order_item
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="itemId != null">
+        item_id,
+      </if>
+      <if test="proNo != null">
+        pro_no,
+      </if>
+      <if test="proCount != null">
+        pro_count,
+      </if>
+      <if test="tempPrice != null">
+        temp_price,
+      </if>
+      <if test="orderNo != null">
+        order_no,
+      </if>
+      <if test="userNo != null">
+        user_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="itemId != null">
+        #{itemId,jdbcType=BIGINT},
+      </if>
+      <if test="proNo != null">
+        #{proNo,jdbcType=VARCHAR},
+      </if>
+      <if test="proCount != null">
+        #{proCount,jdbcType=BIGINT},
+      </if>
+      <if test="tempPrice != null">
+        #{tempPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="orderNo != null">
+        #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.OrderItem">
+    update order_item
+    <set>
+      <if test="proNo != null">
+        pro_no = #{proNo,jdbcType=VARCHAR},
+      </if>
+      <if test="proCount != null">
+        pro_count = #{proCount,jdbcType=BIGINT},
+      </if>
+      <if test="tempPrice != null">
+        temp_price = #{tempPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="orderNo != null">
+        order_no = #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where item_id = #{itemId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.OrderItem">
+    update order_item
+    set pro_no = #{proNo,jdbcType=VARCHAR},
+      pro_count = #{proCount,jdbcType=BIGINT},
+      temp_price = #{tempPrice,jdbcType=DECIMAL},
+      order_no = #{orderNo,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR}
+    where item_id = #{itemId,jdbcType=BIGINT}
+  </update>
+  <select id="selectByOrderNo" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select * from order_item where order_no=#{value}
+  </select>
+  <select id="selectByUserNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from order_item where user_no=#{value}
+  </select>
+
+  <select id="queryByUserNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+      SELECT
+          oi.item_id,
+          ps.pro_url,
+          ps.pro_name,
+          oi.temp_price,
+          ps.inventory,
+          su.user_name,
+          ps.pro_desc,
+          oi.pro_count,
+          ps.unit_price,
+          ps.pro_no,
+          ps.user_no
+      FROM
+          order_item oi
+      LEFT JOIN pro_shop ps ON oi.pro_no = ps.pro_no
+      LEFT JOIN sys_user su ON ps.user_no = su.user_no
+      WHERE
+          oi.user_no = #{userNo}
+  </select>
+
+  <select id="selectRecord" resultMap="BaseResultMap">
+    select * from order_item
+        <where>
+            <if test="itemId != null and itemId !='' ">
+                and item_id = #{itemId}
+            </if>
+            <if test="proNo != null and proNo !='' ">
+                and pro_no = #{proNo}
+            </if>
+            <if test="proCount != null and proCount !='' ">
+                and pro_count = #{proCount}
+            </if>
+            <if test="tempPrice != null and tempPrice !='' ">
+                and temp_price = #{tempPrice}
+            </if>
+            <if test="orderNo != null and orderNo !='' ">
+                and order_no = #{orderNo}
+            </if>
+            <if test="userNo != null and userNo !='' ">
+                and user_no = #{userNo}
+            </if>
+        </where>
+  </select>
+
+    <select id="queryCartByUserAndName" resultMap="BaseResultMap">
+        SELECT
+          oi.item_id,
+          ps.pro_url,
+          ps.pro_name,
+          oi.temp_price,
+          ps.inventory,
+          su.user_name,
+          ps.pro_desc,
+          oi.pro_count,
+          ps.unit_price,
+          ps.pro_no,
+          ps.user_no
+      FROM
+          order_item oi
+      LEFT JOIN pro_shop ps ON oi.pro_no = ps.pro_no
+      LEFT JOIN sys_user su ON ps.user_no = su.user_no
+      <where>
+          <if test="userNo != null and userNo != ''">
+              and oi.user_no = #{userNo}
+          </if>
+          <if test="proName != null and proName != ''">
+              and ps.pro_name like '%${proName}%'
+          </if>
+      </where>
+    </select>
+
+    <delete id="del">
+        delete from order_item where user_no = #{userNo} and pro_no = #{proNo}
+    </delete>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from sys_order where order_no = #{uuid}
+    </delete>
+    <update id="cancel">
+        update sys_order set order_state = '4' where order_no = #{uuid}
+    </update>
+    <update id="updateOrder">
+        update sys_order set order_state = #{orderState} where order_no = #{uuid}
+    </update>
+
+    <insert id="addOrder">
+        insert into sys_order(
+            order_no,
+            fa_address,
+            re_address,
+            re_name,
+            re_phone,
+            sum_price,
+            order_state,
+            user_no,
+            shop_id,
+            shop_count
+        ) values(
+            #{orderNo},
+            (   select
+                    address
+                  from pro_shop ps
+                   left join sys_user su
+                   on ps.user_no = su.user_no
+                 where ps.pro_no = #{proNo}
+            ),
+            (
+                select
+                    address
+                from sys_user
+                  where user_no = #{userNo}
+            ),
+            #{userNo},
+            (
+                select
+                    phone
+                from sys_user
+                  where user_no = #{userNo}
+            ),
+            #{tempPrice},
+            '0',
+            (
+                select
+                    user_no
+                from pro_shop
+                    where pro_no = #{proNo}
+            ),
+            #{proNo},
+            #{proCount}
+        )
+    </insert>
+</mapper>

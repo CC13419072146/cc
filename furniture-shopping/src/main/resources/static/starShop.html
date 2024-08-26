@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>线上购物</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>请选择心仪商家！</h3>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                type="index"
+                width="50">
+        </el-table-column>
+        <el-table-column
+                property="userName"
+                label="店铺名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="userNo"
+                label="店铺账号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="signature"
+                label="店铺介绍"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="250">
+            <el-button size="default" link @click="handleClicker" plain>
+                选择此店铺!
+            </el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="选择商品" v-model="dialogFormVisible" width="800px" center>
+        <el-table
+                ref="singleTable"
+                :data="selectData"
+                @row-click="handleSelectChange"
+                style="width: 100%">
+            <el-table-column
+                    property="proUrl"
+                    label="商品图"
+                    width="200">
+                <template v-slot="scope">
+                    <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    width="10">
+            </el-table-column>
+            <el-table-column
+                    property="proNo"
+                    label="商品号"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="proName"
+                    label="商品名"
+                    width="200">
+            </el-table-column>
+            <el-table-column
+                    property="unitPrice"
+                    label="商品价格"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="inventory"
+                    label="商品库存"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="proDesc"
+                    label="商品描述"
+                    width="300">
+            </el-table-column>
+        </el-table>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.proNo" placeholder="请输入要添加的商品号" autocomplete="off"></el-input>
+                <el-input v-model="form.proCount" placeholder="请输入要添加的数量" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认选择</el-button>
+            </span>
+        </div><br>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.msgDetail" placeholder="请输入要咨询的信息" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="priBack('auditForm')" style="width: 100%">发起咨询</el-button>
+            </span>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                    proNo:"",
+                    proCount:"",
+                    msgDetail:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null
+            }
+        }
+        ,methods: {
+            handleCurrentChange(val) {
+                const objApp=this;
+                this.currentRow = val;
+                console.info(val);
+                let params=new URLSearchParams();
+                params.append("userNo",this.currentRow.userNo);
+                axios.post("/api/pro/pro/byno",params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            objApp.selectData.splice(0, objApp.tableData.length);
+                            const formList = json.data.list;
+                            formList.forEach(function(item){
+                                objApp.selectData.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+                    })
+                this.dialogFormVisible = true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("proNo",objApp.form.proNo);
+                        params.append("proCount",objApp.form.proCount);
+                        axios.post("/api/pro/temp/pro" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("已暂存商品" , {
+                                        callback:function(){
+                                            window.location.href = "/starShop.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,priBack(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("userNo",objApp.currentRow.userNo);
+                        params.append("msgDetail",objApp.form.msgDetail);
+                        axios.post("/api/msg/pri/back" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("咨询发起成功" , {
+                                        callback:function(){
+                                            window.location.href = "/starShop.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/user/all/shop")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        const formList = json.data.list;
+                        formList.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

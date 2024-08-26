@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家具导购用户操作台</title>
+    <link rel="stylesheet" type="text/css" href="assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style>
+        .el-header{
+            background-color: rgb(238,241,246);
+            color: #333;
+            line-height: 60px;
+        }
+        html,body,#app,.el-container{
+            padding: 0px;
+            margin: 0px;
+            height: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container style="height:100%;border:1px solid #eee">
+        <el-header>
+            <el-row>
+                <el-col :span="12">
+                    <span style="font-size: 18px;color: darkcyan">家具导购用户操作台</span>
+                </el-col>
+                <el-col :span="12" style="text-align: right">
+                    <el-dropdown>
+                        <i style="font-size: 18px;margin-right: 15px; line-height: 20px">
+                            <img v-if="user.avatar" :src=`/api/file/download?fileName=${user.avatar}`
+                                 class="avatar" width="20" height="20" style="vertical-align: middle;"/>
+                            <img v-else src="avatar.png" class="avatar" width="20" height="20" style="vertical-align: middle;"/>
+                            <span style="margin-right: 15px; vertical-align: middle;">[{{user.userName}}]</span>
+                        </i>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item v-on:click="logout">注销</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </el-col>
+            </el-row>
+        </el-header>
+        <el-container>
+            <el-aside width="200px" style="max-height:100%;background-color: rgb(238,241,246)">
+                <el-menu :default-openeds="['0']">
+                    <template v-for="(n,idx) in nodeList">
+                        <el-menu-item :index="n.nodeId.toString()" v-on:click="showPage(n.nodeUrl)"><i :class="n.nodeIcon"></i>{{n.nodeDesc}}</el-menu-item>
+                    </template>
+                </el-menu>
+            </el-aside>
+            <el-main>
+                <iframe id="main" name="main" src="/smartPro.html" style="width:100%;height:95%;border:0px"></iframe>
+            </el-main>
+        </el-container>
+    </el-container>
+</div>
+<script>
+    const Main={
+        data(){
+            return{
+                nodeList:[],
+                user:{}
+            }
+        }
+        ,methods:{
+            showPage(url){
+                document.getElementById("main").src=url;
+            }
+            ,logout(){
+                sessionStorage.clear();
+                window.location.href="/login.html";
+            },
+            updateInfo(data) {
+                let event = data.data;
+                if (event.event === 'name') {
+                    this.user.userName = event.data
+                } else if (event.event === 'avatar') {
+                    this.user.avatar = event.data;
+                } else if (event.event === 'toChat') {
+                    document.getElementById("main").src = event.data;
+                }
+            }
+        }
+        ,mounted(){
+            const objApp=this;
+            const role=sessionStorage.roleType;
+            const userNo=sessionStorage.userNo;
+
+            window.addEventListener('message', this.updateInfo, false)
+
+            axios.get("/api/node/by/role?nodeType="+role)
+                .then(function(response){
+                    const json=response.data;
+                    console.log(json);
+                    json.data.list.forEach(function(item){
+                        objApp.nodeList.push(item);
+                    })
+                })
+            axios.post("/api/user/self/msg")
+                .then(function (response) {
+                    const json=response.data;
+                    console.log("json",json);
+                    objApp.user=json.data
+                })
+        }
+    };
+    const app=Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app");
+</script>
+</body>
+</html>

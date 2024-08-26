@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .el-button {
+            padding: 0px 3px;
+            min-height: 10px;
+            height: 28px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>订单管理</h3>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                property="orderNo"
+                label="订单号"
+                width="200">
+            <template #default="scope">
+                <span>{{ scope.row.orderNo }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="faAddress"
+                label="发货地址"
+                width="150">
+            <template #default="scope">
+                <span>{{ scope.row.faAddress }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="reAddress"
+                label="收货地址"
+                width="150">
+            <template #default="scope">
+                <span>{{ scope.row.reAddress }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="reName"
+                label="收货人名"
+                width="100">
+            <template #default="scope">
+                <span>{{ scope.row.reName }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="rePhone"
+                label="收货人电话"
+                width="120">
+            <template #default="scope">
+                <span>{{ scope.row.rePhone }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="sumPrice"
+                label="合计价格"
+                width="100">
+            <template #default="scope">
+                <span>{{ scope.row.sumPrice }}</span>
+            </template>
+        </el-table-column>
+        <el-table-column
+                property="orderState"
+                label="订单状态"
+                width="100">
+            <template #default="scope">
+                <span>{{ scope.row.orderState }}</span>
+            </template>
+        </el-table-column>
+        <!--<el-table-column
+                property="orderNotes"
+                label="订单备注"
+                width="150">
+        </el-table-column>-->
+
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="150">
+            <template #default="scope">
+                <el-button size="default" link @click="handleClicker(scope.row)" plain>
+                    {{scope.row.operator}}
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table><br>
+    <!--<el-dialog title="订单维护" v-model="dialogFormVisible" width="500px" center>
+        &lt;!&ndash;<el-table
+                ref="singleTable"
+                :data="itemData"
+                highlight-current-row
+                style="width: 100%">
+            <el-table-column
+                    property="proUrl"
+                    label="商品图"
+                    width="200">
+                <template v-slot="scope">
+                    <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    property="proName"
+                    label="商品名"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="proDesc"
+                    label="商品描述"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="proCount"
+                    label="购买数量"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="unitPrice"
+                    label="单价"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="tempPrice"
+                    label="此项总价"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="userNo"
+                    label="购买人账号"
+                    width="150">
+            </el-table-column>
+        </el-table>&ndash;&gt;
+        <div class="info" >
+            <br>
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="delivered" style="width: 100%;margin-top: 10px">订单发货</el-button>
+            </span>
+            &lt;!&ndash;<br><br>
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.delName" placeholder="请输入配送人名" autocomplete="off"></el-input>
+                <el-input v-model="form.delPhone" placeholder="请输入配送人电话" autocomplete="off"></el-input>
+                <el-input v-model="form.delAddress" placeholder="请输入要配送地址" autocomplete="off"></el-input>
+            </el-form>
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="curDel('auditForm')" style="width: 100%;margin-top: 10px">发起配送</el-button>
+            </span>&ndash;&gt;
+        </div>
+    </el-dialog>-->
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    proNo:"",
+                    proName:"",
+                    unitPrice:"",
+                    proDesc:"",
+                    proUrl:"",
+                    inventory:"",
+                    delName:"",
+                    delPhone:"",
+                    delAddress:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                itemData:[],
+                currentRow: null
+            }
+        }
+        ,methods: {
+            handleClicker(row) {
+                if (row.operatorNum === 'xxx') {
+                    return ;
+                }
+                let objApp = this;
+                const params = new URLSearchParams();
+                params.append("uuid", row.orderNo);
+                params.append("orderState", row.operatorNum);
+                axios.post("/api/order/item/updateOrder", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.$message.success({message:json.msg,offset:100})
+                        }
+                    });
+
+                objApp.getList();
+            },
+            handleCurrentChange(val) {
+                const objApp=this;
+                this.currentRow = val;
+                console.info(val);
+                let params=new URLSearchParams();
+                params.append("orderNo",this.currentRow.orderNo);
+                axios.post("/api/order/item/byno",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.itemData.splice(0, objApp.tableData.length);
+                            const formList = json.data.list;
+                            formList.forEach(function(item){
+                                objApp.itemData.push(item);
+                            })
+                        }
+                    })
+                this.dialogFormVisible = true;
+            }
+            ,delivered(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("orderId",this.currentRow.orderId);
+                axios.post("/api/order/delivered",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("发货成功" , {
+                                callback:function(){
+                                    window.location.href = "/orderMan.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+            ,curDel(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("delName",objApp.form.delName);
+                        params.append("delPhone",objApp.form.delPhone);
+                        params.append("delAddress",objApp.form.delAddress);
+                        params.append("orderNo",objApp.currentRow.orderNo);
+                        axios.post("/api/del/generator" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("配送单已生成" , {
+                                        callback:function(){
+                                            window.location.href = "/orderMan.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,getList() {
+                const objApp = this;
+                const $message = this.$message;
+                objApp.tableData = [];
+                axios.post("/api/order/all")
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            const formList = json.data.list;
+                            formList.forEach(function(item){
+                                if (item.orderState == '0') {
+                                    item.orderState = '待出库'
+                                    item.operator = '出库'
+                                    item.operatorNum = '1'
+                                } else if (item.orderState == '1') {
+                                    item.orderState = '配送中'
+                                    item.operator = '待收货'
+                                    item.operatorNum = '2'
+                                } else if (item.orderState == '2') {
+                                    item.orderState = '待收货'
+                                    item.operator = '已完成'
+                                    item.operatorNum = '3'
+                                } else if (item.orderState == '3') {
+                                    item.orderState = '已完成'
+                                    item.operator = '已完成'
+                                    item.operatorNum = 'xxx'
+                                } else if (item.orderState == '4') {
+                                    item.orderState = '取消中'
+                                    item.operator = '取消'
+                                    item.operatorNum = '5'
+                                } else if (item.orderState == '5') {
+                                    item.orderState = '已取消'
+                                    item.operator = '已取消'
+                                    item.operatorNum = 'xxx'
+                                }
+                                objApp.tableData.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            this.getList();
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

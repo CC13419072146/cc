@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>配送管理</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>配送管理</h3>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                property="delName"
+                label="配送人"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="delPhone"
+                label="配送电话"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="delAddress"
+                label="配送地址"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                property="orderNo"
+                label="配送订单号"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                property="delState"
+                label="配送状态"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="150">
+            <el-button size="default" link @click="handleClicker" plain>
+                维护此配送单
+            </el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="配送单维护" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="配送人" >{{currentRow.delName}}</el-descriptions-item>
+            <el-descriptions-item label="配送人电话">{{currentRow.delPhone}}</el-descriptions-item>
+            <el-descriptions-item label="配送地址" :span="2">{{currentRow.delAddress}}</el-descriptions-item>
+            <el-descriptions-item label="配送状态"  :span="2">{{currentRow.delState}}</el-descriptions-item>
+        </el-descriptions><br>
+        <div class="info" >
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="succDel" style="width: 100%">配送成功</el-button>
+            </span><br>
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="errDel" style="width: 100%;margin-top: 10px">配送异常</el-button>
+            </span>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null
+            }
+        }
+        ,methods: {
+            handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            }
+            ,succDel(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("delId",this.currentRow.delId);
+                axios.post("/api/del/del/succ",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("配送成功" , {
+                                callback:function(){
+                                    window.location.href = "/delMan.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+            ,errDel(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("delId",this.currentRow.delId);
+                axios.post("/api/del/del/err",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("配送异常" , {
+                                callback:function(){
+                                    window.location.href = "/delMan.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/del/all")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        const formList = json.data.list;
+                        formList.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

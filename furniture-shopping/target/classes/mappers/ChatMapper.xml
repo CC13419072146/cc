@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.ChatMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.SysChat">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="sender" jdbcType="VARCHAR" property="sender" />
+    <result column="receiver" jdbcType="VARCHAR" property="receiver" />
+    <result column="chat_date" jdbcType="VARCHAR" property="chatDate" />
+    <result column="is_read" jdbcType="VARCHAR" property="isRead" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="pro_no" jdbcType="VARCHAR" property="proNo" />
+  </resultMap>
+  <insert id="insertChat" parameterType="com.furniture.shopping.model.pojo.SysChat">
+    insert into sys_chat
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="sender != null">
+        sender,
+      </if>
+      <if test="receiver != null">
+        receiver,
+      </if>
+      <if test="chatDate != null">
+        chat_date,
+      </if>
+      <if test="isRead != null">
+        is_read,
+      </if>
+      <if test="content != null">
+        content,
+      </if>
+      <if test="proNo != null">
+        pro_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="sender != null">
+        #{sender,jdbcType=VARCHAR},
+      </if>
+      <if test="receiver != null">
+        #{receiver,jdbcType=VARCHAR},
+      </if>
+      <if test="chatDate != null">
+        #{chatDate,jdbcType=VARCHAR},
+      </if>
+      <if test="isRead != null">
+        #{isRead,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="proNo != null">
+        #{proNo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+    <update id="setRead">
+        update sys_chat set is_read = '1' where sender = #{sender} and receiver = #{receiver}
+    </update>
+
+    <select id="getUnReadCountByProNo" resultType="java.lang.Integer">
+    select count(*) from sys_chat t where t.sender = #{sender}
+    and t.receiver = #{receiver} and t.is_read = '0' and t.pro_no = #{proNo}
+  </select>
+  <select id="getChatList" resultType="com.furniture.shopping.model.pojo.SysChat">
+    SELECT
+        sc.content,
+        sc.sender,
+        sc.receiver,
+        sc.chat_date as chatDate
+    FROM
+        sys_chat sc
+    WHERE
+        (
+            sc.sender = #{userNo}
+            AND sc.receiver = #{other}
+        )
+    OR (
+        sc.sender = #{other}
+        AND sc.receiver = #{userNo}
+    )
+    ORDER BY
+        sc.chat_date DESC
+    LIMIT 1
+  </select>
+  <select id="getUnReadCount" resultType="java.lang.Integer">
+    select count(*) from sys_chat t where t.sender = #{sender} and t.receiver = #{receiver} and t.is_read = '0'
+  </select>
+  <select id="getChatContentList" resultType="com.furniture.shopping.model.pojo.SysChat">
+    SELECT
+        sc.content,
+        sc.chat_date AS chatDate,
+        sc.sender,
+        sc.receiver
+    FROM
+        sys_chat sc
+    WHERE
+        (
+            sc.sender = #{sender}
+            AND sc.receiver = #{receiver}
+        )
+    OR (
+        sc.sender = #{receiver}
+        AND sc.receiver = #{sender}
+    )
+    ORDER BY
+        sc.chat_date ASC
+  </select>
+  <select id="getChatByUserNoIsSender" resultType="java.lang.String" parameterType="java.lang.String">
+    select sc.receiver from sys_chat sc where sc.sender = #{userNo}
+  </select>
+  <select id="getChatByUserNoIsReceiver" resultType="java.lang.String" parameterType="java.lang.String">
+    select sc.sender from sys_chat sc where sc.receiver = #{userNo}
+  </select>
+    <select id="getOtherUser" resultType="com.furniture.shopping.model.pojo.User"
+            parameterType="java.lang.String">
+        select user_name as userName, user_avatar as avatar from sys_user where user_no = #{userNo}
+    </select>
+</mapper>

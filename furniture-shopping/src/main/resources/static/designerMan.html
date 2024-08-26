@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>设计师管理</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>设计师管理</h3>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertSubmit" style="width: 200px;">添加新设计师</el-button>
+    </span>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                type="index"
+                width="50">
+        </el-table-column>
+        <el-table-column
+                property="userName"
+                label="设计师名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="userNo"
+                label="设计师账号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="password"
+                label="加密后密码"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                property="signature"
+                label="设计师签名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="150">
+            <el-button size="default" link @click="handleClicker" plain>
+                维护此设计师
+            </el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="设计师维护" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="设计师名" >{{currentRow.userName}}</el-descriptions-item>
+            <el-descriptions-item label="设计师账号">{{currentRow.userNo}}</el-descriptions-item>
+            <el-descriptions-item label="加密后密码" :span="2">{{currentRow.password}}</el-descriptions-item>
+            <el-descriptions-item label="设计师签名"  :span="2">{{currentRow.signature}}</el-descriptions-item>
+        </el-descriptions>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入要修改的设计师名" autocomplete="off"></el-input>
+                <el-input v-model="form.userNo" placeholder="请输入要修改的设计师账号" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入要修改的设计师密码" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入要修改的设计师签名" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认更新</el-button>
+            </span><br>
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="deleteUser" style="width: 100%;margin-top: 10px">删除此设计师</el-button>
+            </span>
+        </div>
+    </el-dialog>
+    <el-dialog title="新增设计师" v-model="dialogInsertVisible" width="500px" center>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入新的设计师名" autocomplete="off"></el-input>
+                <el-input v-model="form.userNo" placeholder="请输入新的设计师账号" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入新的设计师密码" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入新的设计师签名" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertUser('auditForm')" style="width: 100%">确认新增</el-button>
+            </span>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null
+            }
+        }
+        ,methods: {
+            handleClicker() {
+                this.form = {
+                    userName:"",
+                        userNo:"",
+                        password:"",
+                        signature:"",
+                }
+            },
+            insertSubmit(){
+                const objApp=this;
+                objApp.dialogInsertVisible=true;
+                objApp.form = {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                }
+            }
+            ,handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("userId",objApp.currentRow.userId);
+                        if (objApp.form.userName.length!==0){
+                            params.append("userName",objApp.form.userName);
+                        }
+                        if (objApp.form.userNo.length!==0){
+                            params.append("userNo",objApp.form.userNo);
+                        }
+                        if (objApp.form.password.length!==0){
+                            params.append("password",objApp.form.password);
+                        }
+                        if (objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        axios.post("/api/user/update/user" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("更新成功" , {
+                                        callback:function(){
+                                            window.location.href = "/designerMan.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                                objApp.form = {
+                                    userName:"",
+                                    userNo:"",
+                                    password:"",
+                                    signature:"",
+                                }
+                            })
+                    }
+                })
+            }
+            ,insertUser(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("userName",objApp.form.userName);
+                        params.append("userNo",objApp.form.userNo);
+                        params.append("password",objApp.form.password);
+                        if (objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        axios.post("/api/user/insert/designer" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("添加成功" , {
+                                        callback:function(){
+                                            window.location.href = "/designerMan.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,deleteUser(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("userId",this.currentRow.userId);
+                axios.post("/api/user/delete/user",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("删除成功" , {
+                                callback:function(){
+                                    window.location.href = "/designerMan.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/user/all/designer")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        const formList = json.data.list;
+                        formList.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

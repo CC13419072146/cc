@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>店铺管理</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>店铺管理</h3>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertSubmit" style="width: 200px;">添加新店铺</el-button>
+    </span>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                type="index"
+                width="50">
+        </el-table-column>
+        <el-table-column
+                property="userName"
+                label="店铺名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="userNo"
+                label="店铺账号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="businessLicense"
+                label="营业执照号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="password"
+                label="店铺安全密码"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                property="signature"
+                label="店铺介绍"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                align="center"
+                label="操作"
+                width="150">
+                <el-button size="default" link @click="handleClicker" plain>
+                    维护此店铺
+                </el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="店铺维护" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="店铺名" >{{currentRow.userName}}</el-descriptions-item>
+            <el-descriptions-item label="店铺号">{{currentRow.userNo}}</el-descriptions-item>
+            <el-descriptions-item label="店铺安全密码" :span="2">{{currentRow.password}}</el-descriptions-item>
+            <el-descriptions-item label="营业执照"  :span="2">{{currentRow.businessLicense}}</el-descriptions-item>
+            <el-descriptions-item label="店铺简介"  :span="2">{{currentRow.signature}}</el-descriptions-item>
+        </el-descriptions>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入要修改的店铺名" autocomplete="off"></el-input>
+                <el-input v-model="form.userNo" placeholder="请输入要修改的店铺号" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入要修改的店铺密码" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入要修改的店铺简介" autocomplete="off"></el-input>
+                <el-input v-model="form.businessLicense" placeholder="请输入要修改的营业执照" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认更新</el-button>
+            </span><br>
+            <span class="dialog-footer">
+                <el-button type="danger" v-on:click="deleteUser" style="width: 100%;margin-top: 10px">删除此店铺</el-button>
+            </span>
+            <span class="dialog-footer" v-if="currentRow.userStatus == 1">
+                <el-button type="success" v-on:click="deleteUser1" style="width: 100%;margin-top: 10px" disabled>已审核</el-button>
+            </span>
+            <span class="dialog-footer" v-if="currentRow.userStatus == 2">
+                <el-button type="warning" v-on:click="onSubmit('auditForm', 'status')" style="width: 100%;margin-top: 10px">审核中</el-button>
+            </span>
+        </div>
+    </el-dialog>
+    <el-dialog title="新增店铺" v-model="dialogInsertVisible" width="500px" center>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入新的店铺名" autocomplete="off"></el-input>
+                <el-input v-model="form.userNo" placeholder="请输入新的店铺账号" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入新的店铺密码" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入新的店铺介绍" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertUser('auditForm')" style="width: 100%">确认新增</el-button>
+            </span>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                    userStatus: "",
+                    businessLicense: ""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null
+            }
+        }
+        ,methods: {
+            handleClicker() {
+                this.form = {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                    businessLicense:"",
+                    userStatus: "xx"
+                }
+            },
+            insertSubmit(){
+                const objApp=this;
+                objApp.dialogInsertVisible=true;
+                this.form = {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    signature:"",
+                }
+            }
+            ,handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            }
+            ,onSubmit(formName, operate){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        debugger
+                        let params = new URLSearchParams();
+                        params.append("userId",objApp.currentRow.userId);
+                        if (objApp.form.userName.length!==0){
+                            params.append("userName",objApp.form.userName);
+                        }
+                        if (objApp.form.userNo.length!==0){
+                            params.append("userNo",objApp.form.userNo);
+                        }
+                        if (objApp.form.password.length!==0){
+                            params.append("password",objApp.form.password);
+                        }
+                        if (objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        if (objApp.form.businessLicense.length!==0){
+                            params.append("businessLicense",objApp.form.businessLicense);
+                        }
+                        if (operate === 'status'){
+                            params.append("userStatus", "1");
+                        }
+                        axios.post("/api/user/update/user" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("更新成功" , {
+                                        callback:function(){
+                                            window.location.href = "/shopMan.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,insertUser(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("userName",objApp.form.userName);
+                        params.append("userNo",objApp.form.userNo);
+                        params.append("password",objApp.form.password);
+                        if (objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        axios.post("/api/user/insert/shop" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("添加成功" , {
+                                        callback:function(){
+                                            window.location.href = "/shopMan.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,deleteUser(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("userId",this.currentRow.userId);
+                axios.post("/api/user/delete/user",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("删除成功" , {
+                                callback:function(){
+                                    window.location.href = "/shopMan.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/user/all/shop")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        const formList = json.data.list;
+                        formList.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

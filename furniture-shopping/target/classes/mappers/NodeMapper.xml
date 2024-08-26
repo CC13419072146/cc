@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.NodeMapper">
+    <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.Node">
+        <id column="node_id" jdbcType="BIGINT" property="nodeId" />
+        <result column="node_type" jdbcType="BIGINT" property="nodeType" />
+        <result column="node_desc" jdbcType="VARCHAR" property="nodeDesc" />
+        <result column="node_url" jdbcType="VARCHAR" property="nodeUrl" />
+        <result column="node_icon" jdbcType="VARCHAR" property="nodeIcon" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        node_id,node_type,node_desc,node_url, node_icon
+    </sql>
+    <select id="selectByRole" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"></include>
+        from sys_node where node_type=#{value}
+    </select>
+</mapper>

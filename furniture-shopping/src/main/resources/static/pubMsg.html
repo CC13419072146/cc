@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>在线论坛</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        .el-upload--picture-card {
+            width: 100px;
+            height: 100px;
+        }
+        .el-upload--picture-card i {
+            font-size: 75px;
+        }
+
+        .el-upload-list--picture-card .el-upload-list__item {
+            width: 100px;
+            height: 100px;
+        }
+
+        .el-input__inner {
+            height: 28px;
+            line-height: 28px;
+        }
+
+        .el-button.is-circle {
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        .el-button {
+            min-height: 10px;
+            font-size: 10px;
+        }
+
+        .el-button.is-round {
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>论坛交流</h3>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="insertSubmit" style="width: 200px;">发布新消息</el-button>
+    </span>
+    <!--<el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                property="userNo"
+                label="发起人账号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="userName"
+                label="发起人姓名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="cdate"
+                label="发起时间"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="msgDetail"
+                label="消息内容"
+                width="300">
+        </el-table-column>
+    </el-table><br>-->
+    <el-dialog title="发布新消息" v-model="dialogFormVisible" width="500px" center>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.msgDetail" placeholder="请输入新发布的内容" autocomplete="off"></el-input>
+            </el-form><br>
+
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :on-preview="handlePictureCardPreview"
+                    auto-upload="false"
+                    limit="6"
+                    multiple
+                    ref="pictureUpload"
+                    :http-request="upload"
+                    :on-exceed="handleExceed"
+                    :before-upload="beforeAvatarUpload"
+                    :on-remove="handleRemove">
+                <i class="el-icon-plus"></i>
+            </el-upload>
+            <el-dialog :visible.sync="dialogVisible">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+
+
+
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%; margin-top: 10px">确认发布</el-button>
+            </span>
+        </div>
+    </el-dialog>
+
+    <div id="content" style="margin-top: 30px">
+        <div style="width: 100%; height: auto; margin-bottom: 20px" v-for="(talk, index) in talks">
+            <img v-if="talk.userAvatar" :src=`/api/file/download?fileName=${talk.userAvatar}` width="30" height="30">
+            <img v-else src="avatar.png" width="30" height="30">
+            <span style="margin-left: 10px; font-size: 15px; vertical-align: top; margin-top: 1px; font-weight: bold">{{talk.userName}}</span>
+            <span style="font-size: 5px; margin-left: -39px; vertical-align: bottom">{{talk.msgDate}}</span>
+            <div style="width: 300px; height: auto; max-height: 200px; margin-top: 10px;
+            overflow: hidden; text-overflow: ellipsis; word-break: break-all; margin-left: 10px;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3">
+                {{talk.msgDetail}}
+            </div>
+
+            <div style="width: 320px; height: auto; margin-top: 10px; margin-left: 10px">
+                <img :src=`/api/file/download?fileName=${talkPic}` width="100" height="100" style="margin-right: 5px"
+                     v-for="(talkPic, index) in talk.talkPictures">
+            </div>
+            <div style="margin-top: 5px; margin-left: 10px">
+                <!--<img src="comment.png" width="20" height="20" style="vertical-align: middle">-->
+                <el-button type="primary" icon="el-icon-edit" circle @click="pushComment(talk)" style="margin-top: 10px"></el-button>
+                <el-input v-model="comment" placeholder="请输入内容" style="width: 180px;
+                    height: 20px;margin-left: 5px;" v-if="talk.display"></el-input>
+                <el-button type="success" round style="margin-left: 5px;"
+                           v-if="talk.display" style="margin-top: 10px" @click="pubComment(talk)">评论</el-button>
+            </div>
+            <div style="margin-top: 5px; margin-left: 20px" v-for="(comment, index) in talk.sysComments">
+                <span style="font-size: 10px; color: gray">{{comment.userName}}</span>
+                <span style="font-size: 10px; color: gray">:</span>
+                <span style="font-size: 10px; margin-left: 5px; color: gray">{{comment.content}}</span>
+            </div>
+            <el-divider></el-divider>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    msgDetail:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                talks: [],
+
+                dialogImageUrl: '',
+                dialogVisible: false,
+                comment: ''
+            }
+        }
+        ,methods: {
+
+            pushComment(talk) {
+                talk.display = !talk.display;
+            },
+
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                // if (!isJPG) {
+                //     this.$message.error('上传头像图片只能是 JPG 格式!');
+                // }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+
+            pubComment(talk) {
+                const objApp = this;
+                const $message = this.$message;
+                let userNo = sessionStorage.getItem('userNo');
+                if (this.comment === '') {
+                    this.$message.error({message: '内容不能为空',offset:100})
+                    return ;
+                }
+                formData.append('userNo', userNo);
+                formData.append("content",this.comment);
+                formData.append("msgId", talk.msgId)
+                axios.post("/api/msg/pushComment" , formData)
+                    .then(function(response){
+                        const json = response.data;
+                        console.info(json);
+                        if(json.status === 10000){
+                            objApp.$message.success({message:"评论成功",offset:100})
+                            objApp.getMsg();
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            },
+
+            handleExceed() {
+                this.$message.error({message:'图片不能超过6张',offset:100})
+            },
+
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+
+            insertSubmit(){
+                const objApp=this;
+                objApp.dialogFormVisible=true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                const $message = this.$message;
+                let userNo = sessionStorage.getItem('userNo');
+                let uploadFiles = this.$refs.pictureUpload.uploadFiles;
+                formData = new FormData();
+                uploadFiles.map(file => {
+                    formData.append("files", file.raw);
+                });
+                formData.append('userNo', userNo);
+                formData.append("msgDetail",objApp.form.msgDetail);
+                formData.append('userName', sessionStorage.getItem('userName'));
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        axios.post("/api/msg/pushMsg" , formData)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("发布成功" , {
+                                        callback:function(){
+                                            window.location.href = "/pubMsg.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            },
+            upload(request) {
+
+            },
+            getMsg() {
+                const objApp = this;
+                const $message = this.$message;
+                this.talks = [];
+                this.comment = '';
+                formData = new FormData();
+                formData.append("page", 0);
+                formData.append("pageSize", 10000);
+                axios.post("/api/msg/getMsgList", formData)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            const datas = json.data;
+                            datas.forEach(function(item){
+                                item.display = false;
+                                objApp.talks.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            this.getMsg();
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>购物车</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <h3>购物车</h3>
+    <el-form :model="form" ref="auditForm">
+        <el-input v-model="form.proName" placeholder="请输入搜索的商品全名或字段" autocomplete="off"></el-input>
+    </el-form>
+    <br>
+    <span class="dialog-footer">
+        <el-button type="primary" v-on:click="selectPro('auditForm')" style="width: 200px">查询</el-button><br>
+    </span>
+    <br>
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                label="商品图"
+                width="220" key="slot">
+            <template #default="scope">
+                <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品名"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.proName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品价格(元)"
+                width="130" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.unitPrice }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="购买数量"
+                width="150" key="slot" align="center">
+            <template #default="scope">
+                <el-input-number size="mini" v-model="scope.row.proCount"></el-input-number>
+                <!--<span>{{ scope.row.proCount }}</span>-->
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="总价(元)"
+                width="200" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.tempPrice }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="店铺名"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.userName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品描述"
+                width="150" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.proDesc }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column label="操作" key="slot"
+                         align="center" width="230">
+            <template #default="scope">
+                <el-button
+                        size="mini"
+                        type="success"
+                        plain
+                        @click="openQRCode(scope.$index, scope.row)">购买</el-button>
+                <el-button
+                        size="mini"
+                        type="danger"
+                        @click="handleDel(scope.$index, scope.row)">删除</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog title="支付二维码" v-model="dialogVisible" width="300px" center>
+        <el-image center style="width: 250px;height: 200px" src="/api/order/generate/qrcode?content=支付"></el-image>
+        <br>
+        <div slot="footer" class="dialog-footer" style="text-align: center">
+            <el-button @click="dialogVisible=false">取消</el-button>
+            <el-button type="primary" @click="zhifu">已支付</el-button>
+        </div>
+    </el-dialog>
+
+    <!--<h3>购物车</h3>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="generatorSubmit" style="width: 200px;">生成订单</el-button>
+    </span>
+    <el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                property="proUrl"
+                label="商品图"
+                width="200">
+            <template v-slot="scope">
+                <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+            </template>
+        </el-table-column>
+        <el-table-column
+                width="10">
+        </el-table-column>
+        <el-table-column
+                property="proName"
+                label="商品名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="proDesc"
+                label="商品描述"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="unitPrice"
+                label="商品单价"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="proCount"
+                label="商品数量"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="tempPrice"
+                label="商品总价"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="operator"
+                label="操作"
+                width="150">
+            <el-button size="default" link @click="handleClicker" plain>
+                删除此项
+            </el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="确认删除？" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="商品名" :span="2">{{currentRow.proName}}</el-descriptions-item>
+            <el-descriptions-item label="数量">{{currentRow.proCount}}</el-descriptions-item>
+            <el-descriptions-item label="总价">{{currentRow.tempPrice}}</el-descriptions-item>
+            <el-descriptions-item label="商品描述"  :span="2">{{currentRow.proDesc}}</el-descriptions-item>
+        </el-descriptions>
+        <div class="info" >
+            <span class="dialog-footer2">
+                <el-button type="primary" v-on:click="deletePro" style="width: 100%;margin-top: 10px">确认删除</el-button>
+            </span>
+        </div>
+    </el-dialog>
+    <el-dialog title="生成订单" v-model="dialogGeneratorVisible" width="500px" center>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.faAddress" placeholder="请输入期望的发货地址" autocomplete="off"></el-input>
+                <el-input v-model="form.reAddress" placeholder="请输入收货地址" autocomplete="off"></el-input>
+                <el-input v-model="form.reName" placeholder="请输入收货人昵称" autocomplete="off"></el-input>
+                <el-input v-model="form.rePhone" placeholder="请输入收货电话号" autocomplete="off"></el-input>
+                <el-input v-model="form.userNo" placeholder="请输入商家店铺号" autocomplete="off"></el-input>
+                <el-input v-model="form.orderNotes" placeholder="请输入备注(选输项)" autocomplete="off"></el-input>
+            </el-form><br>
+            <span class="dialog-footer">
+              <el-button type="primary" v-on:click="generatorPro('auditForm')" style="width: 100%">确认生成</el-button>
+            </span>
+        </div>
+    </el-dialog>-->
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogGeneratorVisible:false,
+                form: {
+                    proName: ""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                dialogVisible: false,
+                index: 0,
+                row: null
+            }
+        }
+        ,methods: {
+
+            zhifu() {
+                const objApp=this;
+                objApp.dialogVisible = false;
+                objApp.purchase(objApp.index, objApp.row);
+            },
+
+            openQRCode(index, row) {
+                const objApp=this;
+                objApp.dialogVisible = true;
+                objApp.index = index;
+                objApp.row = row;
+            },
+
+            //购买
+            purchase(index, row) {
+
+                const objApp = this;
+                let userNo = sessionStorage.getItem("userNo")
+                let params = new URLSearchParams();
+                params.append("userNo", userNo)
+                params.append("proNo", row.proNo);
+                params.append("tempPrice", row.tempPrice);
+                params.append("proCount", row.proCount);
+                axios.post("/api/order/order/purchase" , params)
+                    .then(function (response) {
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.getList();
+                            objApp.$message.success({message: json.msg,offset:100})
+                        } else {
+                            objApp.$message.error({message: json.msg,offset:100})
+                        }
+                    })
+            },
+
+            //删除
+            handleDel(index, row) {
+                const objApp = this;
+                this.dialogVisible = false;
+                let userNo = sessionStorage.getItem("userNo")
+                let params = new URLSearchParams();
+                params.append("userNo", userNo)
+                params.append("proNo", row.proNo);
+                axios.post("/api/order/item/del" , params)
+                    .then(function (response) {
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.getList();
+                            objApp.$message.success({message: json.msg,offset:100})
+                        }
+                    })
+            },
+
+            //查询
+            selectPro() {
+                const objApp = this;
+                objApp.tableData = [];
+                let userNo = sessionStorage.getItem("userNo")
+                let params = new URLSearchParams();
+                params.append("userNo", userNo)
+                params.append("proName", objApp.form.proName );
+                axios.post("/api/order/item/queryCart" , params)
+                    .then(function (response) {
+                        if (response.data.data.length === 0) {
+                            objApp.$message.error({message: '没有查询的商品', offset: 100});
+                            return ;
+                        }
+                        response.data.data.forEach(function(item){
+                            objApp.tableData.push(item);
+                        })
+                    })
+            },
+
+            generatorSubmit(){
+                const objApp=this;
+                objApp.dialogGeneratorVisible=true;
+            }
+            ,handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            }
+            ,generatorPro(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        params.append("faAddress",objApp.form.faAddress);
+                        params.append("reAddress",objApp.form.reAddress);
+                        params.append("reName",objApp.form.reName);
+                        params.append("rePhone",objApp.form.rePhone);
+                        params.append("userNo",objApp.form.userNo);
+                        if (objApp.form.orderNotes.length!==0){
+                            params.append("orderNotes",objApp.form.orderNotes);
+                        }
+                        axios.post("/api/order/generator/order" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("生成成功" , {
+                                        callback:function(){
+                                            window.location.href = "/tempPro.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+            ,deletePro(){
+                let objApp=this;
+                let params=new URLSearchParams();
+                params.append("itemId",this.currentRow.itemId);
+                axios.post("/api/order/delete/item",params)
+                    .then(function (response){
+                        const json=response.data;
+                        console.log(json);
+                        if(json.status === 10000){
+                            objApp.$alert("删除成功" , {
+                                callback:function(){
+                                    window.location.href = "/tempPro.html";
+                                }
+                            })
+                        }else{
+                            objApp.$message.error({message:json.msg,offset:100})
+                        }
+                    })
+            },
+            getList() {
+                const objApp = this;
+                const $message = this.$message;
+                let userNo = sessionStorage.getItem("userNo")
+                let params=new URLSearchParams();
+                params.append("userNo", userNo);
+                axios.post("/api/order/item/by/user",params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            objApp.tableData.splice(0, objApp.tableData.length);
+                            const formList = json.data;
+                            formList.forEach(function(item){
+                                objApp.tableData.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+                    })
+            }
+        }
+        ,mounted(){
+            this.getList();
+        }
+
+        ,watch: {
+            tableData: {
+                deep: true,
+                handler: function (newValue) {
+                    newValue.forEach(e => {
+                        e.tempPrice = e.proCount * e.unitPrice
+                    })
+                }
+            }
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

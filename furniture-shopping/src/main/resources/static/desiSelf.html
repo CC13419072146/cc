@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>个人主页</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>个人主页</h3>
+    <el-descriptions  :column="2" border>
+        <el-descriptions-item label="本人姓名" :span="2">{{designer.userName}}</el-descriptions-item>
+        <el-descriptions-item label="登录账号">{{designer.userNo}}</el-descriptions-item>
+        <el-descriptions-item label="安全密码" >{{designer.password}}</el-descriptions-item>
+        <el-descriptions-item label="本人简介" >{{designer.signature}}</el-descriptions-item>
+    </el-descriptions><br>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="updateSubmit" style="width: 200px;">更新信息</el-button>
+    </span>
+    <el-dialog title="信息维护" v-model="dialogFormVisible" width="500px" center>
+        <el-descriptions  :column="2" border>
+            <el-descriptions-item label="本人姓名" :span="2">{{designer.userName}}</el-descriptions-item>
+            <el-descriptions-item label="登录账号">{{designer.userNo}}</el-descriptions-item>
+            <el-descriptions-item label="安全密码" >{{designer.password}}</el-descriptions-item>
+            <el-descriptions-item label="本人简介" >{{designer.signature}}</el-descriptions-item>
+        </el-descriptions>
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入要修改的姓名" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入要修改的密码" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入要修改的签名" autocomplete="off"></el-input>
+            </el-form>
+            <span class="dialog-footer"><br>
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认更新</el-button>
+            </span><br>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    roleType:"",
+                    signature:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                designer:{}
+            }
+        }
+        ,methods: {
+            updateSubmit(){
+                const objApp=this;
+                this.dialogFormVisible=true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        let params = new URLSearchParams();
+                        if (objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        if (objApp.form.password.length!==0){
+                            params.append("password",objApp.form.password)
+                        }
+                        if (objApp.form.userName.length!==0){
+                            params.append("userName",objApp.form.userName);
+                        }
+                        axios.post("/api/user/update/user" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("信息更新成功" , {
+                                        callback:function(){
+                                            window.location.href = "/desiSelf.html";
+                                        }
+                                    })
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/user/self/msg")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        objApp.designer = json.data;
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

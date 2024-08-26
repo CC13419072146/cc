@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.SysMessageMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.SysMessage">
+    <id column="msg_id" jdbcType="BIGINT" property="msgId" />
+    <result column="msg_type" jdbcType="VARCHAR" property="msgType" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="msg_date" jdbcType="TIMESTAMP" property="msgDate" />
+    <result column="other_no" jdbcType="VARCHAR" property="otherNo" />
+    <result column="msg_detail" jdbcType="VARCHAR" property="msgDetail" />
+    <result column="talk_picture" jdbcType="VARCHAR" property="talkPicture" />
+    <result column="user_avatar" jdbcType="VARCHAR" property="userAvatar"/>
+  </resultMap>
+    <resultMap id="SysCommentMap" type="com.furniture.shopping.model.pojo.SysComment">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <result column="msg_id" jdbcType="BIGINT" property="msgId" />
+        <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+        <result column="user_name" jdbcType="VARCHAR" property="userName" />
+        <result column="content" jdbcType="VARCHAR" property="content" />
+        <result column="comment_date" jdbcType="VARCHAR" property="commentDate" />
+    </resultMap>
+  <sql id="Base_Column_List">
+    msg_id, msg_type, user_no, user_name, msg_date, other_no, msg_detail
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from sys_msg
+    where msg_id = #{msgId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from sys_msg
+    where msg_id = #{msgId,jdbcType=BIGINT}
+  </delete>
+    <delete id="delMsg" parameterType="int">
+        delete from sys_msg where msg_id = #{msgId}
+    </delete>
+    <insert id="insert" parameterType="com.furniture.shopping.model.pojo.SysMessage">
+    insert into sys_msg (msg_id, msg_type, user_no, 
+      user_name, msg_date, other_no, 
+      msg_detail)
+    values (#{msgId,jdbcType=BIGINT}, #{msgType,jdbcType=VARCHAR}, #{userNo,jdbcType=VARCHAR}, 
+      #{userName,jdbcType=VARCHAR}, #{msgDate,jdbcType=TIMESTAMP}, #{otherNo,jdbcType=VARCHAR}, 
+      #{msgDetail,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.SysMessage">
+    insert into sys_msg
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="msgId != null">
+        msg_id,
+      </if>
+      <if test="msgType != null">
+        msg_type,
+      </if>
+      <if test="userNo != null">
+        user_no,
+      </if>
+      <if test="userName != null">
+        user_name,
+      </if>
+      <if test="msgDate != null">
+        msg_date,
+      </if>
+      <if test="otherNo != null">
+        other_no,
+      </if>
+      <if test="msgDetail != null">
+        msg_detail,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="msgId != null">
+        #{msgId,jdbcType=BIGINT},
+      </if>
+      <if test="msgType != null">
+        #{msgType,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null">
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="msgDate != null">
+        #{msgDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="otherNo != null">
+        #{otherNo,jdbcType=VARCHAR},
+      </if>
+      <if test="msgDetail != null">
+        #{msgDetail,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+    <insert id="addTalk" parameterType="com.furniture.shopping.model.pojo.SysMessage">
+      INSERT INTO sys_msg (
+          msg_type,
+          user_no,
+          user_name,
+          msg_date,
+          other_no,
+          msg_detail,
+          talk_picture
+      )
+      VALUES
+          (
+              '论坛交流',
+              #{userNo},
+              #{userName},
+              now(),
+              '**',
+              #{msgDetail},
+              #{talkPicture}
+          )
+    </insert>
+    <insert id="pushComment" parameterType="com.furniture.shopping.model.pojo.SysComment">
+        INSERT INTO sys_comment (
+            msg_id,
+            user_no,
+            content,
+            comment_date
+        )
+        VALUES
+            (#{msgId},
+             #{userNo},
+             #{content},
+             date_format(now(), '%Y-%m-%d %H:%i:%s'))
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.SysMessage">
+    update sys_msg
+    <set>
+      <if test="msgType != null">
+        msg_type = #{msgType,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null">
+        user_name = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="msgDate != null">
+        msg_date = #{msgDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="otherNo != null">
+        other_no = #{otherNo,jdbcType=VARCHAR},
+      </if>
+      <if test="msgDetail != null">
+        msg_detail = #{msgDetail,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where msg_id = #{msgId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.SysMessage">
+    update sys_msg
+    set msg_type = #{msgType,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR},
+      user_name = #{userName,jdbcType=VARCHAR},
+      msg_date = #{msgDate,jdbcType=TIMESTAMP},
+      other_no = #{otherNo,jdbcType=VARCHAR},
+      msg_detail = #{msgDetail,jdbcType=VARCHAR}
+    where msg_id = #{msgId,jdbcType=BIGINT}
+  </update>
+  <select id="allMsg" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select * from sys_msg where user_no=#{userNo} or other_no=#{userNo}
+  </select>
+  <select id="allAll" resultMap="BaseResultMap">
+    select * from sys_msg
+  </select>
+  <select id="getMsgList" resultType="com.furniture.shopping.model.pojo.SysMessage">
+      SELECT
+          sm.msg_id,
+          sm.msg_type,
+          sm.user_no,
+          su.user_name,
+          date_format(sm.msg_date, '%Y-%m-%d %H:%i:%s') as msg_date,
+          sm.msg_detail,
+          sm.talk_picture,
+          su.user_avatar
+      FROM
+          sys_msg sm
+      LEFT JOIN sys_user su ON sm.user_no = su.user_no
+      WHERE
+          sm.msg_type = '论坛交流'
+      ORDER BY
+          sm.msg_date DESC
+      LIMIT #{pageSize} OFFSET #{page}
+  </select>
+    <select id="getCommentList" resultMap="SysCommentMap">
+        SELECT
+            sc.id,
+            sc.msg_id,
+            sc.user_no,
+            su.user_name,
+            sc.content,
+            sc.comment_date
+        FROM
+            sys_comment sc
+        LEFT JOIN sys_user su ON sc.user_no = su.user_no
+        WHERE
+            msg_id = #{sc.msg_id}
+        ORDER BY
+            sc.comment_date DESC
+    </select>
+    <select id="searchMsg" resultType="com.furniture.shopping.model.pojo.SysMessage">
+        SELECT
+          sm.msg_id,
+          sm.msg_type,
+          sm.user_no,
+          su.user_name,
+          date_format(sm.msg_date, '%Y-%m-%d %H:%i:%s') as msg_date,
+          sm.msg_detail,
+          sm.talk_picture,
+          su.user_avatar
+      FROM
+          sys_msg sm
+      LEFT JOIN sys_user su ON sm.user_no = su.user_no
+      WHERE
+          sm.msg_type = '论坛交流'
+          <if test="content != null and content != ''">
+              and (sm.msg_detail like '%${content}%' or su.user_name like '%${content}%')
+          </if>
+          <if test="searchTimeStart != null and searchTimeStart != ''">
+              and sm.msg_date >= str_to_date(#{searchTimeStart}, '%Y-%m-%d %H:%i:%s')
+          </if>
+          <if test="searchTimeEnd != null and searchTimeEnd != ''">
+              and sm.msg_date &lt;= str_to_date(#{searchTimeEnd}, '%Y-%m-%d %H:%i:%s')
+          </if>
+      ORDER BY
+          sm.msg_date DESC
+      LIMIT #{pageSize} OFFSET #{page}
+    </select>
+</mapper>

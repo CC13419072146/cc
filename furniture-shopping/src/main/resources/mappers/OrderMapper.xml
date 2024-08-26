@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.OrderMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.Order">
+    <id column="order_id" jdbcType="BIGINT" property="orderId" />
+    <result column="order_no" jdbcType="VARCHAR" property="orderNo" />
+    <result column="fa_address" jdbcType="VARCHAR" property="faAddress" />
+    <result column="re_address" jdbcType="VARCHAR" property="reAddress" />
+    <result column="re_name" jdbcType="VARCHAR" property="reName" />
+    <result column="re_phone" jdbcType="BIGINT" property="rePhone" />
+    <result column="sum_price" jdbcType="DECIMAL" property="sumPrice" />
+    <result column="order_state" jdbcType="VARCHAR" property="orderState" />
+    <result column="order_notes" jdbcType="VARCHAR" property="orderNotes" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+    <result column="shop_count" jdbcType="BIGINT" property="shopCount" />
+    <result column="shop_id" jdbcType="VARCHAR" property="shopId" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    order_id, order_no, fa_address, re_address, re_name, re_phone, sum_price, order_state, 
+    order_notes, user_no
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from sys_order
+    where order_id = #{orderId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from sys_order
+    where order_id = #{orderId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.furniture.shopping.model.pojo.Order">
+    insert into sys_order (order_id, order_no, fa_address, 
+      re_address, re_name, re_phone, 
+      sum_price, order_state, order_notes, 
+      user_no)
+    values (#{orderId,jdbcType=BIGINT}, #{orderNo,jdbcType=VARCHAR}, #{faAddress,jdbcType=VARCHAR}, 
+      #{reAddress,jdbcType=VARCHAR}, #{reName,jdbcType=VARCHAR}, #{rePhone,jdbcType=BIGINT}, 
+      #{sumPrice,jdbcType=DECIMAL}, #{orderState,jdbcType=VARCHAR}, #{orderNotes,jdbcType=VARCHAR}, 
+      #{userNo,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.Order">
+    insert into sys_order
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="orderNo != null">
+        order_no,
+      </if>
+      <if test="faAddress != null">
+        fa_address,
+      </if>
+      <if test="reAddress != null">
+        re_address,
+      </if>
+      <if test="reName != null">
+        re_name,
+      </if>
+      <if test="rePhone != null">
+        re_phone,
+      </if>
+      <if test="sumPrice != null">
+        sum_price,
+      </if>
+      <if test="orderState != null">
+        order_state,
+      </if>
+      <if test="orderNotes != null">
+        order_notes,
+      </if>
+      <if test="userNo != null">
+        user_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        #{orderId,jdbcType=BIGINT},
+      </if>
+      <if test="orderNo != null">
+        #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="faAddress != null">
+        #{faAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="reAddress != null">
+        #{reAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="reName != null">
+        #{reName,jdbcType=VARCHAR},
+      </if>
+      <if test="rePhone != null">
+        #{rePhone,jdbcType=BIGINT},
+      </if>
+      <if test="sumPrice != null">
+        #{sumPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="orderState != null">
+        #{orderState,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNotes != null">
+        #{orderNotes,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.Order">
+    update sys_order
+    <set>
+      <if test="orderNo != null">
+        order_no = #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="faAddress != null">
+        fa_address = #{faAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="reAddress != null">
+        re_address = #{reAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="reName != null">
+        re_name = #{reName,jdbcType=VARCHAR},
+      </if>
+      <if test="rePhone != null">
+        re_phone = #{rePhone,jdbcType=BIGINT},
+      </if>
+      <if test="sumPrice != null">
+        sum_price = #{sumPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="orderState != null">
+        order_state = #{orderState,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNotes != null">
+        order_notes = #{orderNotes,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where order_id = #{orderId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.Order">
+    update sys_order
+    set order_no = #{orderNo,jdbcType=VARCHAR},
+      fa_address = #{faAddress,jdbcType=VARCHAR},
+      re_address = #{reAddress,jdbcType=VARCHAR},
+      re_name = #{reName,jdbcType=VARCHAR},
+      re_phone = #{rePhone,jdbcType=BIGINT},
+      sum_price = #{sumPrice,jdbcType=DECIMAL},
+      order_state = #{orderState,jdbcType=VARCHAR},
+      order_notes = #{orderNotes,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR}
+    where order_id = #{orderId,jdbcType=BIGINT}
+  </update>
+  <update id="sureOrder" parameterType="java.lang.String">
+    update sys_order set order_state = '3' where order_no = #{uuid}
+  </update>
+  <select id="selectByUserNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from sys_order where user_no=#{value}
+  </select>
+    <select id="orderListAll" resultType="com.furniture.shopping.model.pojo.MyOrder"
+            parameterType="java.lang.String">
+      SELECT
+          ps.pro_url AS proUrl,
+          ps.pro_name AS proName,
+          so.sum_price AS sumPrice,
+          so.shop_count AS shopCount,
+          su.user_name AS userName,
+          ps.pro_desc AS proDesc,
+          so.order_state AS orderState,
+          so.order_no AS orderNo
+      FROM
+          sys_order so
+      LEFT JOIN pro_shop ps ON so.shop_id = ps.pro_no
+      LEFT JOIN sys_user su ON so.user_no = su.user_no
+      WHERE
+          so.re_name = #{userNo}
+          AND so.order_state IN ('0', '1', '2', '3', '4', '5')
+    </select>
+  <select id="orderListByProName" resultType="com.furniture.shopping.model.pojo.MyOrder">
+      SELECT
+          ps.pro_url AS proUrl,
+          ps.pro_name AS proName,
+          so.sum_price AS sumPrice,
+          so.shop_count AS shopCount,
+          su.user_name AS userName,
+          ps.pro_desc AS proDesc,
+          so.order_state AS orderState,
+          so.order_no AS orderNo
+      FROM
+          sys_order so
+      LEFT JOIN pro_shop ps ON so.shop_id = ps.pro_no
+      LEFT JOIN sys_user su ON so.user_no = su.user_no
+      WHERE
+          so.re_name = #{userNo}
+      AND so.order_state IN ('0', '1', '2', '3', '4', '5')
+      AND ps.pro_name LIKE '%${proName}%'
+  </select>
+</mapper>

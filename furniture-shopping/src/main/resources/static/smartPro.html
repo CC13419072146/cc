@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能推荐</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        .el-dialog__body {
+            height: 240px;
+            background-color: #f5f5f5;
+            overflow: auto;
+            padding: 0px 10px;
+        }
+        .chat-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+            height: 55%;
+            overflow: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .clearfix:before, .clearfix:after{
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .message-text-me {
+            background-color: #9eea6a;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+            max-width: 80%;
+            float: right;
+        }
+        .message-time-me {
+            font-size: 12px;
+            color: #999;
+            margin-left: 5px;
+            float: right;
+        }
+        .message-text {
+            background-color: #ffffff;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+            max-width: 80%;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: 5px;
+        }
+        .input-box {
+            margin-top: 10px;
+            height: 30%;
+        }
+        .input-box textarea {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #ffffff;
+            width: 98%;
+            outline: none;
+            resize: none;
+        }
+        .send {
+            padding: 2px;
+            border-radius: 5px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            width: 50px;
+            cursor: pointer;
+            float: right;
+        }
+        .clean {
+            padding: 2px;
+            border-radius: 5px;
+            border: none;
+            background-color: #ffffff;
+            color: black;
+            width: 50px;
+            cursor: pointer;
+            border: 1px solid black;
+            float: right;
+            margin-right: 10px;
+        }
+        .item {
+            margin-right: 40px;
+        }
+        .el-table .cell {
+            padding-top: 20px;
+        }
+        .el-input__inner {
+            width: 80%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>智能推荐</h3>
+    <el-form :model="form" ref="auditForm">
+        <el-row>
+            <el-col :span="18">
+                <el-input v-model="form.proName" placeholder="请输入搜索的商品全名或字段" autocomplete="off" :inline="true"></el-input>
+            </el-col>
+            <el-col :span="5">
+                <span class="dialog-footer">
+                    <el-button type="primary" v-on:click="selectPro('auditForm')" style="width: 100px;" :inline="true">查询</el-button><br>
+                </span>
+            </el-col>
+        </el-row>
+        <br>
+        <el-row>
+            <el-select v-model="form.proCate" placeholder="请选择分类">
+                <el-option v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+                </el-option>
+            </el-select>
+        </el-row>
+    </el-form>
+    <!--<br>-->
+
+    <!--<br>-->
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                label="商品图"
+                width="220" key="slot">
+            <template #default="scope">
+                <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+                <span style="position: absolute; top: 32px; left: 10px; background: #d3be15;">销量{{scope.row.salesVolume}}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品名"
+                width="120" key="slot" align="left">
+            <template #default="scope">
+                <span>{{ scope.row.proName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品价格(元)"
+                width="110" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.unitPrice }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品库存"
+                width="90" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.inventory }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="店铺名"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.userName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品描述"
+                width="200" key="slot" align="left">
+            <template #default="scope">
+                <span>{{ scope.row.proDesc }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column label="操作" key="slot" align="center" width="270">
+            <template #default="scope">
+                <el-button
+                        size="mini"
+                        type="success"
+                        plain
+                        @click="addShoppingCart(scope.$index, scope.row)">加入购物车</el-button>
+                <el-badge :value="scope.row.unReadCount" :max="99" class="item" type="danger" hidden="hidden">
+                    <el-button
+                            size="mini"
+                            type="primary"
+                            style="margin-left: 10px"
+                            @click="linkSeller(scope.$index, scope.row)">联系卖家</el-button>
+                </el-badge>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <!--<el-dialog
+            :title="`${shopUserName}`"
+            v-model="dialogVisible"
+            width="60%">
+        <div class="chat-box" id="chatBox" ref="chat">
+            <div v-for="message in messages" :key="message.id" class="message clearfix">
+                <div v-if="message.sender === `${currentUser}`" class="message-text-me">{{message.content}}</div>
+                <div v-else class="message-text">{{message.content}}</div>
+                <div v-if="message.sender === `${currentUser}`" class="clearfix">
+                    <span class="message-time-me">{{message.chatDate}}</span>
+                </div>
+                <div v-else class="message-time">{{message.chatDate}}</div>
+            </div>
+        </div>
+
+        <div class="input-box">
+            <textarea v-model="newMessage" class="textarea" @keyup.enter="sendMessage"></textarea>
+            &lt;!&ndash;<input tex v-model="newMessage" @keyup.enter="sendMessage" placeholder="xxx">&ndash;&gt;
+            <button @click="sendMessage" class="send">发送</button>
+            <button @click="cleanMessage" class="clean">清空</button>
+        </div>
+    </el-dialog>-->
+
+    <!--<el-table
+            ref="singleTable"
+            :data="tableData"
+            highlight-current-row
+            @row-click="handleCurrentChange"
+            style="width: 100%">
+        <el-table-column
+                property="proUrl"
+                label="商品图"
+                width="200">
+            <template v-slot="scope">
+                <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+            </template>
+        </el-table-column>
+        <el-table-column
+                width="10">
+        </el-table-column>
+        <el-table-column
+                property="proName"
+                label="商品名"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="unitPrice"
+                label="商品价格"
+                width="100">
+        </el-table-column>
+        <el-table-column
+                property="inventory"
+                label="商品库存"
+                width="100">
+        </el-table-column>
+        <el-table-column
+                property="userNo"
+                label="所属店铺号"
+                width="150">
+        </el-table-column>
+        <el-table-column
+                property="proDesc"
+                label="商品描述"
+                width="200">
+        </el-table-column>
+        <el-table-column label="操作">
+                <el-button
+                        size="mini"
+                        type="success"
+                        plain
+                        @click="handleEdit(scope.$index, scope.row)">加入购物车</el-button>
+                <el-button
+                        size="mini"
+                        type="primary"
+                        @click="handleDelete(scope.$index, scope.row)">联系卖家</el-button>
+        </el-table-column>
+    </el-table><br>
+    <el-dialog title="查询结果" v-model="dialogSelectVisible"
+               width="800px" center>
+        <el-table
+                ref="singleTable"
+                :data="selectData"
+                highlight-current-row
+                @row-click="handleCurrentChange"
+                style="width: 100%">
+            <el-table-column
+                    property="proUrl"
+                    label="商品图"
+                    width="200">
+                <template v-slot="scope">
+                    <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    width="10">
+            </el-table-column>
+            <el-table-column
+                    property="proName"
+                    label="商品名"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="unitPrice"
+                    label="商品价格"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    property="inventory"
+                    label="商品库存"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    property="userNo"
+                    label="所属店铺号"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    property="proDesc"
+                    label="商品描述"
+                    width="200">
+            </el-table-column>
+        </el-table><br>
+    </el-dialog>-->
+
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogSelectVisible:false,
+                form: {
+                    proNo:"",
+                    proName:"",
+                    unitPrice:"",
+                    proDesc:"",
+                    proUrl:"",
+                    inventory:"",
+                    proCate: ""
+                },
+                options: [{
+                    value: "",
+                    label: "请选择分类"
+                }, {
+                    value: "gz",
+                    label: "柜子"
+                }, {
+                    value: 'yz',
+                    label: '椅子'
+                }, {
+                    value: "zz",
+                    label: "桌子"
+                }, {
+                    value: "cj",
+                    label: "茶几"
+                }, {
+                    value: "bgyp",
+                    label: "办公用品"
+                }, {
+                    value: "cd",
+                    label: "床单"
+                }, {
+                    value: "qt",
+                    label: "其他"
+                }],
+                formLabelWidth: '120px',
+                tableData: [/*{
+                    proUrl: "aa",
+                    proName: "bb",
+                    unitPrice: "cc",
+                    inventory: "dd",
+                    userNo: "ee",
+                    proDesc: "ff"
+                }*/],
+                selectData:[],
+                currentRow: null,
+                dialogVisible: false,
+                messages: [
+                ],
+                newMessage: '',
+                disableWebSocket: false,
+                websocket: null,
+                shopUser: '',
+                shopUserName: '',
+                proNo: '',
+                msg: {},
+                currentUser: sessionStorage.getItem('userNo'),
+            }
+        }
+        ,methods: {
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    let chatBox = document.getElementById("chatBox");
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                })
+            },
+            sendMessage() {
+                if (this.newMessage.trim()) {
+
+                    this.msg.sender = sessionStorage.getItem('userNo');
+                    this.msg.receiver = this.shopUser;
+                    this.msg.content = this.newMessage;
+                    this.msg.proNo = this.proNo;
+
+                    this.websocket.send(JSON.stringify(this.msg));
+                }
+            },
+            cleanMessage() {
+                this.newMessage = '';
+                this.messages = [];
+            },
+            handleCurrentChange(val) {
+                this.currentRow = val;
+                console.info(val);
+                this.dialogFormVisible = true;
+            },
+            selectPro(formName){
+
+                const objApp = this;
+                objApp.tableData = [];
+                let params = new URLSearchParams();
+                params.append("proName",objApp.form.proName);
+                params.append("proCate", objApp.form.proCate);
+                axios.post("/api/pro/find/pro" , params)
+                .then(function (response) {
+                    if (response.data.data.list.length === 0) {
+                        objApp.$message.error({message: '没有查询的商品', offset: 100});
+                        return ;
+                    }
+                    response.data.data.list.forEach(function(item){
+                        if (item.salesVolume > 99) {
+                            item.salesVolume = "99+"
+                        }
+                        objApp.tableData.push(item);
+                    })
+                })
+
+
+                // const objApp = this;
+                // objApp.dialogSelectVisible=true;
+                // this.$refs[formName].validate(function(valid){
+                //     if(valid){
+                //         let params = new URLSearchParams();
+                //         params.append("proName",objApp.form.proName);
+                //         axios.post("/api/pro/find/pro" , params)
+                //             .then(function(response){
+                //                 const json = response.data;
+                //                 console.info(json);
+                //                 if(json.status === 10000){
+                //                     objApp.selectData.splice(0, objApp.selectData.length);
+                //                     const formList = json.data.list;
+                //                     formList.forEach(function(item){
+                //                         objApp.selectData.push(item);
+                //                     })
+                //                 }else{
+                //                     objApp.$message.error({message:json.msg,offset:100})
+                //                 }
+                //             })
+                //     }
+                // })
+            },
+            addShoppingCart(index, row) {
+                let objApp = this;
+                let userNo = sessionStorage.getItem("userNo")
+                const params = new URLSearchParams();
+                params.append("userNo", userNo);
+                params.append("proNo", row.proNo);
+                params.append("proCount", 1);
+                params.append("tempPrice", row.unitPrice);
+                params.append("orderNo", "***")
+                axios.post("/api/order/item/add", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.$message.success({message: json.msg,offset:100})
+                        }
+                    });
+            },
+            linkSeller(index, row) {
+                /*this.dialogVisible = true;
+                this.scrollToBottom();
+                this.shopUser = row.userNo;
+                this.shopUserName = row.userName;
+                this.proNo = row.proNo;*/
+                window.location.href = "/chat.html?shopUser=" + row.userNo + "&shopUserName=" + row.userName;
+                // parent.window.postMessage({event: 'toChat', data: "/chat.html"})
+            },
+            initWebSocket() {
+
+                let healthFunction;
+                let reconnectTimes;
+                let clearCounter;
+                let objApp = this;
+                if (this.websocket == null) {
+                    if (!this.disableWebSocket) {
+                        var userNo = sessionStorage.getItem("userNo");
+                        let url = (window.location.protocol === 'http:' ? 'ws://' : 'wss://')
+                            + window.location.host
+                            + '/chat/' + userNo;
+                        this.websocket = new WebSocket(url);
+
+                        this.websocket.onclose = function () {
+                            if (reconnectTimes++ > 10) {
+                                objApp.disableWebSocket = true;
+                            }
+                            setTimeout(objApp.initWebSocket, 3000);
+                            clearTimeout(clearCounter);
+                            clearCounter = setTimeout(function () {
+                                reconnectTimes = 0;
+                            }, 60000);
+                        }
+
+                        this.websocket.onmessage = function (event) {
+                            objApp.onMessage(event);
+                        }
+
+                        this.websocket.onopen = function () {
+                            console.log('连接成功')
+                        }
+
+                        // clearInterval(healthFunction);
+                        // healthFunction = setInterval(function () {
+                        //     objApp.websocket.send("ping")
+                        // }, 3000)
+                    } else {
+                        clearInterval(healthFunction);
+                        this.websocket = null;
+                    }
+                }
+            },
+            onMessage(event) {
+                console.log(event.data)
+                var data = JSON.parse(event.data);
+                if (data.type === 'health') {
+
+                } else if (data.type === 'msg_ack') {
+                    this.messages.push(data);
+                    this.newMessage = '';
+                    this.scrollToBottom();
+                }
+            }
+        }
+        ,created(){
+            let objApp = this;
+            const $message = this.$message;
+
+            const params = new URLSearchParams();
+            let userNo = sessionStorage.getItem('userNo');
+            params.append("userNo", userNo);
+            axios.post("/api/pro/getAllGoods", params)
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        const formList = json.data;
+                        formList.forEach(function(item){
+                            if (item.salesVolume > 99) {
+                                item.salesVolume = "99+"
+                            }
+                            objApp.tableData.push(item);
+                        })
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+
+                })
+        }
+        /*,mounted() {
+            this.initWebSocket();
+            window.onbeforeunload = function() {
+                if (this.websocket != null) {
+                    this.websocket.close();
+                }
+            }
+        }*/
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.DesiProMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.DesiPro">
+    <id column="desi_id" jdbcType="BIGINT" property="desiId" />
+    <result column="desi_url" jdbcType="VARCHAR" property="desiUrl" />
+    <result column="desi_title" jdbcType="VARCHAR" property="desiTitle" />
+    <result column="desi_desc" jdbcType="VARCHAR" property="desiDesc" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    desi_id, desi_url, desi_title, desi_desc, user_no
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from desi_pro
+    where desi_id = #{desiId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from desi_pro
+    where desi_id = #{desiId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.furniture.shopping.model.pojo.DesiPro">
+    insert into desi_pro (desi_id, desi_url, desi_title, 
+      desi_desc, user_no)
+    values (#{desiId,jdbcType=BIGINT}, #{desiUrl,jdbcType=VARCHAR}, #{desiTitle,jdbcType=VARCHAR}, 
+      #{desiDesc,jdbcType=VARCHAR}, #{userNo,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.DesiPro">
+    insert into desi_pro
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="desiId != null">
+        desi_id,
+      </if>
+      <if test="desiUrl != null">
+        desi_url,
+      </if>
+      <if test="desiTitle != null">
+        desi_title,
+      </if>
+      <if test="desiDesc != null">
+        desi_desc,
+      </if>
+      <if test="userNo != null">
+        user_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="desiId != null">
+        #{desiId,jdbcType=BIGINT},
+      </if>
+      <if test="desiUrl != null">
+        #{desiUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="desiTitle != null">
+        #{desiTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="desiDesc != null">
+        #{desiDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.DesiPro">
+    update desi_pro
+    <set>
+      <if test="desiUrl != null">
+        desi_url = #{desiUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="desiTitle != null">
+        desi_title = #{desiTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="desiDesc != null">
+        desi_desc = #{desiDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where desi_id = #{desiId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.DesiPro">
+    update desi_pro
+    set desi_url = #{desiUrl,jdbcType=VARCHAR},
+      desi_title = #{desiTitle,jdbcType=VARCHAR},
+      desi_desc = #{desiDesc,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR}
+    where desi_id = #{desiId,jdbcType=BIGINT}
+  </update>
+  <select id="selectByNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select <include refid="Base_Column_List"></include>
+    from desi_pro where user_no=#{value}
+  </select>
+  <select id="allPlan" resultType="com.furniture.shopping.model.pojo.DesiPro">
+    select
+        dp.desi_id as desiId, dp.desi_url as desiUrl, dp.desi_title as desiTitle,
+        dp.desi_desc as desiDesc, dp.user_no as userNo, su.user_name as userName
+    from desi_pro dp left join sys_user su on dp.user_no = su.user_no
+  </select>
+</mapper>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>智能推荐</h3>
+    <el-form :model="form" ref="auditForm">
+        <el-input v-model="form.proName" placeholder="请输入搜索的商品全名或字段" autocomplete="off"></el-input>
+    </el-form>
+    <br>
+    <span class="dialog-footer">
+        <el-button type="primary" v-on:click="selectPro('auditForm')" style="width: 200px">查询</el-button><br>
+    </span>
+    <br>
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                label="商品图"
+                width="220" key="slot">
+            <template #default="scope">
+                <img height="150" width="200" onerror="this.src='/img.png'" :src="scope.row.proUrl" style="margin-right: 10px"/>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品名"
+                width="120" key="slot" align="left">
+            <template #default="scope">
+                <span>{{ scope.row.proName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品总价"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.sumPrice }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品数量"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.shopCount }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="店铺名"
+                width="100" key="slot" align="center">
+            <template #default="scope">
+                <span>{{ scope.row.userName }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column
+                label="商品描述"
+                width="200" key="slot" align="left">
+            <template #default="scope">
+                <span>{{ scope.row.proDesc }}</span>
+            </template>
+        </el-table-column>
+
+        <el-table-column label="操作" key="slot" align="center"
+                         :filters="filterArr" :filter-method="filterState">
+            <template #default="scope">
+                <el-button
+                        v-if="scope.row.orderState === '0'"
+                        size="mini"
+                        type="success"
+                        plain
+                        disabled>
+                    待出库
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '1'"
+                        size="mini"
+                        type="success"
+                        plain
+                        disabled>
+                    配送中
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '2'"
+                        size="mini"
+                        type="success"
+                        plain
+                        @click="addShopping(scope.$index, scope.row)">
+                    确认收货
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '3'"
+                        size="mini"
+                        type="success"
+                        disabled>
+                    已完成
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '4'"
+                        size="mini"
+                        type="danger"
+                        disabled>
+                    取消中
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '5'"
+                        size="mini"
+                        type="danger"
+                        disabled>
+                    已取消
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState !== '5' && scope.row.orderState !== '4'"
+                        size="mini"
+                        type="danger"
+                        plain
+                        @click="cancelShopping(scope.$index, scope.row)">
+                    取消订单
+                </el-button>
+                <el-button
+                        v-if="scope.row.orderState === '5'"
+                        size="mini"
+                        type="danger"
+                        @click="delShopping(scope.$index, scope.row)">
+                    删除
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogSelectVisible:false,
+                form: {
+                    proNo:"",
+                    proName:"",
+                    unitPrice:"",
+                    proDesc:"",
+                    proUrl:"",
+                    inventory:""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                filterArr: [{text: '待收货', value: '待收货'}, {text: '已收货', value: '已收货'}],
+            }
+        }
+        ,methods: {
+            filterState(value, row, column) {
+                let str = row.orderState === '2' ? '待收货' : '已收货'
+                return str === value;
+            },
+
+            selectPro(formName){
+
+                let objApp = this;
+                objApp.tableData = [];
+                const $message = this.$message;
+                let userNo = sessionStorage.getItem("userNo")
+                const params = new URLSearchParams();
+                params.append("userNo", userNo);
+                params.append("proName", objApp.form.proName)
+                axios.post("/api/order/order/orderList", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000){
+                            const formList = json.data;
+                            formList.forEach(function(item){
+                                objApp.tableData.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+
+                    })
+
+            },
+            addShopping(index, row) {
+                let objApp = this;
+                const params = new URLSearchParams();
+                params.append("uuid", row.orderNo);
+                axios.post("/api/order/order/sureOrder", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.$message.success({message:json.msg,offset:100})
+                        }
+                    });
+
+                objApp.getData();
+            },
+            cancelShopping(index, row) {
+                let objApp = this;
+                const params = new URLSearchParams();
+                params.append("uuid", row.orderNo);
+                axios.post("/api/order/item/cancel", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.$message.success({message:json.msg,offset:100})
+                        }
+                    });
+
+                objApp.getData();
+            },
+            delShopping(index, row) {
+                let objApp = this;
+                const params = new URLSearchParams();
+                params.append("uuid", row.orderNo);
+                axios.post("/api/order/delete", params)
+                    .then(function(response){
+                        const json = response.data;
+                        if(json.status === 10000) {
+                            objApp.$message.success({message:json.msg,offset:100})
+                        }
+                    });
+
+                objApp.getData();
+            },
+            getData() {
+                let objApp = this;
+                objApp.tableData = [];
+                const $message = this.$message;
+                let userNo = sessionStorage.getItem("userNo")
+                const params = new URLSearchParams();
+                params.append("userNo", userNo);
+                axios.post("/api/order/order/orderList", params)
+                    .then(function(response){
+                        const json = response.data;
+                        debugger
+                        if(json.status === 10000){
+                            const formList = json.data;
+                            formList.forEach(function(item){
+                                objApp.tableData.push(item);
+                            })
+                        }else{
+                            $message.error({message:json.msg,offset:100})
+                        }
+
+                    })
+            }
+        }
+        ,created(){
+            this.getData();
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>

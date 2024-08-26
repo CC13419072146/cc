@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.furniture.shopping.model.dao.SysDeliveryMapper">
+  <resultMap id="BaseResultMap" type="com.furniture.shopping.model.pojo.SysDelivery">
+    <id column="del_id" jdbcType="BIGINT" property="delId" />
+    <result column="del_name" jdbcType="VARCHAR" property="delName" />
+    <result column="del_phone" jdbcType="BIGINT" property="delPhone" />
+    <result column="del_address" jdbcType="VARCHAR" property="delAddress" />
+    <result column="order_no" jdbcType="VARCHAR" property="orderNo" />
+    <result column="del_state" jdbcType="VARCHAR" property="delState" />
+    <result column="user_no" jdbcType="VARCHAR" property="userNo" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    del_id, del_name, del_phone, del_address, order_no, del_state, user_no
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from sys_del
+    where del_id = #{delId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from sys_del
+    where del_id = #{delId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.furniture.shopping.model.pojo.SysDelivery">
+    insert into sys_del (del_id, del_name, del_phone, 
+      del_address, order_no, del_state, 
+      user_no)
+    values (#{delId,jdbcType=BIGINT}, #{delName,jdbcType=VARCHAR}, #{delPhone,jdbcType=BIGINT}, 
+      #{delAddress,jdbcType=VARCHAR}, #{orderNo,jdbcType=VARCHAR}, #{delState,jdbcType=VARCHAR}, 
+      #{userNo,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.furniture.shopping.model.pojo.SysDelivery">
+    insert into sys_del
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="delId != null">
+        del_id,
+      </if>
+      <if test="delName != null">
+        del_name,
+      </if>
+      <if test="delPhone != null">
+        del_phone,
+      </if>
+      <if test="delAddress != null">
+        del_address,
+      </if>
+      <if test="orderNo != null">
+        order_no,
+      </if>
+      <if test="delState != null">
+        del_state,
+      </if>
+      <if test="userNo != null">
+        user_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="delId != null">
+        #{delId,jdbcType=BIGINT},
+      </if>
+      <if test="delName != null">
+        #{delName,jdbcType=VARCHAR},
+      </if>
+      <if test="delPhone != null">
+        #{delPhone,jdbcType=BIGINT},
+      </if>
+      <if test="delAddress != null">
+        #{delAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNo != null">
+        #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="delState != null">
+        #{delState,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        #{userNo,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.furniture.shopping.model.pojo.SysDelivery">
+    update sys_del
+    <set>
+      <if test="delName != null">
+        del_name = #{delName,jdbcType=VARCHAR},
+      </if>
+      <if test="delPhone != null">
+        del_phone = #{delPhone,jdbcType=BIGINT},
+      </if>
+      <if test="delAddress != null">
+        del_address = #{delAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="orderNo != null">
+        order_no = #{orderNo,jdbcType=VARCHAR},
+      </if>
+      <if test="delState != null">
+        del_state = #{delState,jdbcType=VARCHAR},
+      </if>
+      <if test="userNo != null">
+        user_no = #{userNo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where del_id = #{delId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.furniture.shopping.model.pojo.SysDelivery">
+    update sys_del
+    set del_name = #{delName,jdbcType=VARCHAR},
+      del_phone = #{delPhone,jdbcType=BIGINT},
+      del_address = #{delAddress,jdbcType=VARCHAR},
+      order_no = #{orderNo,jdbcType=VARCHAR},
+      del_state = #{delState,jdbcType=VARCHAR},
+      user_no = #{userNo,jdbcType=VARCHAR}
+    where del_id = #{delId,jdbcType=BIGINT}
+  </update>
+  <select id="selectByUserNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from sys_del where user_no=#{value}
+  </select>
+</mapper>

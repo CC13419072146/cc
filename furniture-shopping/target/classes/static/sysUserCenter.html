@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>个人主页</title>
+    <link rel="stylesheet" type="text/css" href="/assets/element-plus/index.css">
+    <script src="/assets/vue/vue.global.js"></script>
+    <script src="/assets/element-plus/index.full.js"></script>
+    <script src="/assets/axios/axios.js"></script>
+    <style >
+        .info .el-col,.info .el-select ,.info .el-input{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 100px;
+            height: 100px;
+            line-height: 100px;
+            text-align: center;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>个人主页</h3>
+    <el-descriptions  :column="2" border>
+        <el-descriptions-item label="本人姓名" :span="2">{{designer.userName}}</el-descriptions-item>
+        <el-descriptions-item label="登录账号" :span="2">{{designer.userNo}}</el-descriptions-item>
+        <el-descriptions-item label="安全密码" :span="2">{{designer.password}}</el-descriptions-item>
+        <el-descriptions-item label="本人简介" :span="2">{{designer.signature}}</el-descriptions-item>
+        <el-descriptions-item label="收货地址" :span="2">{{designer.address}}</el-descriptions-item>
+        <el-descriptions-item label="手机号码" :span="2">{{designer.phone}}</el-descriptions-item>
+
+        <el-descriptions-item label="用户头像" :span="2">
+            <img v-if="designer.avatar" :src=`/api/file/download?fileName=${designer.avatar}` class="avatar"/>
+            <img v-else src="avatar.png" class="avatar"/>
+        </el-descriptions-item>
+
+    </el-descriptions><br>
+    <span class="dialog-footer">
+              <el-button type="primary" v-on:click="updateSubmit" style="width: 200px;">更新信息</el-button>
+    </span>
+    <el-dialog title="信息维护" v-model="dialogFormVisible" width="500px" center>
+        <!--<el-descriptions  :column="2" border>
+            <el-descriptions-item label="本人姓名" :span="2">{{designer.userName}}</el-descriptions-item>
+            <el-descriptions-item label="登录账号">{{designer.userNo}}</el-descriptions-item>
+            <el-descriptions-item label="安全密码" >{{designer.password}}</el-descriptions-item>
+            <el-descriptions-item label="本人简介" >{{designer.signature}}</el-descriptions-item>
+            <el-descriptions-item label="收货地址" >{{designer.address}}</el-descriptions-item>
+        </el-descriptions>-->
+        <div class="info" >
+            <el-form :model="form" ref="auditForm">
+                <el-input v-model="form.userName" placeholder="请输入要修改的姓名(为空不修改)" autocomplete="off"></el-input>
+                <el-input v-model="form.password" placeholder="请输入要修改的密码(为空不修改)" autocomplete="off"></el-input>
+                <el-input v-model="form.signature" placeholder="请输入要修改的签名(为空不修改)" autocomplete="off"></el-input>
+                <el-input v-model="form.address" placeholder="请输入要修改的地址(为空不修改)" autocomplete="off"></el-input>
+                <el-input v-model="form.phone" placeholder="请输入要修改的手机(为空不修改)" autocomplete="off"></el-input>
+
+                <el-upload
+                        class="avatar-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="upload"
+                        :before-upload="beforeAvatarUpload">
+                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
+
+            </el-form>
+            <span class="dialog-footer"><br>
+              <el-button type="primary" v-on:click="onSubmit('auditForm')" style="width: 100%">确认更新</el-button>
+            </span><br>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    function formatDate(time){
+        var newDate = new Date(time);
+        return newDate.getFullYear() + "-" +
+            (newDate.getMonth() + 1) + "-" + newDate.getDate()
+            + " " + newDate.getHours() + "时";
+    }
+
+    var Main = {
+        data() {
+            return {
+                imageUrl: '',
+                dialogFormVisible: false,
+                selectVisible:false,
+                dialogInsertVisible:false,
+                form: {
+                    userName:"",
+                    userNo:"",
+                    password:"",
+                    roleType:"",
+                    signature:"",
+                    address: "",
+                    phone:"",
+                    avatar: ""
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                selectData:[],
+                currentRow: null,
+                designer:{},
+                imageUrl: ''
+            }
+        }
+        ,methods: {
+            upload(request) {
+                let objApp = this;
+                const $message = this.$message;
+                let file = request.file;
+                let userNo = sessionStorage.getItem('userNo');
+                formData = new FormData();
+                formData.append('file', file);
+                formData.append('userNo', userNo);
+                formData.append('uploadFlag', '1');
+
+                axios.post("/api/file/upload", formData)
+                    .then(function (response) {
+                        const json = response.data;
+                        console.log(json);
+                        if (json.status === 10000) {
+                            parent.window.postMessage({event: 'avatar', data: json.msg})
+                            $message.success({message: '头像修改成功', offset: 100});
+                            objApp.imageUrl = "/api/file/download?fileName=" + json.msg;
+                        }
+                    })
+            },
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = URL.createObjectURL(file.raw);
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+
+            updateSubmit(){
+                const objApp=this;
+                this.dialogFormVisible=true;
+            }
+            ,onSubmit(formName){
+                const objApp = this;
+                this.$refs[formName].validate(function(valid){
+                    if(valid){
+                        const $message = objApp.$message;
+                        let params = new URLSearchParams();
+                        if (objApp.form.signature && objApp.form.signature.length!==0){
+                            params.append("signature",objApp.form.signature);
+                        }
+                        if (objApp.form.password && objApp.form.password.length!==0){
+                            params.append("password",objApp.form.password)
+                        }
+                        if (objApp.form.userName && objApp.form.userName.length!==0){
+                            params.append("userName",objApp.form.userName);
+                        }
+                        if (objApp.form.address && objApp.form.address.length!==0){
+                            params.append("address",objApp.form.address);
+                        }
+                        if (objApp.form.phone && objApp.form.phone.length!==0){
+                            if (!(/^1[3456789]\d{9}$/.test(objApp.form.phone))) {
+                                $message.error({message: '手机号格式不正确', offset: 100})
+                                return ;
+                            }
+                            params.append("phone",objApp.form.phone);
+                        }
+                        params.append("userId", objApp.designer.userId)
+                        axios.post("/api/user/update/user" , params)
+                            .then(function(response){
+                                const json = response.data;
+                                console.info(json);
+                                if(json.status === 10000){
+                                    objApp.$alert("信息更新成功" , {
+                                        callback:function(){
+                                            window.location.href = "/sysUserCenter.html";
+                                        }
+                                    })
+                                    parent.window.postMessage({event: 'name', data: objApp.form.userName})
+                                }else{
+                                    objApp.$message.error({message:json.msg,offset:100})
+                                }
+                            })
+                    }
+                })
+            }
+        }
+        ,mounted(){
+            const objApp = this;
+            const $message = this.$message;
+            axios.post("/api/user/self/msg")
+                .then(function(response){
+                    const json = response.data;
+                    if(json.status === 10000){
+                        objApp.tableData.splice(0, objApp.tableData.length);
+                        objApp.designer = json.data;
+                        if (json.data.avatar) {
+                            objApp.imageUrl = "/api/file/download?fileName=" + json.data.avatar;
+                        } else {
+                            objApp.imageUrl = 'avatar.png';
+                        }
+                        objApp.form = json.data;
+                    }else{
+                        $message.error({message:json.msg,offset:100})
+                    }
+                })
+        }
+    };
+    const app = Vue.createApp(Main);
+    app.use(ElementPlus);
+    app.mount("#app")
+</script>
+
+</body>
+</html>
